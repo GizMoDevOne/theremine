@@ -1,0 +1,65 @@
+"use strict";
+/* ============================================================================
+   UI — wave/scale chips, sliders, octave, help modal, playable SVG diagram
+   ==========================================================================*/
+(function(Th){
+  const $=Th.$, V=Th.V, P=Th.P, Input=Th.Input, clamp01=Th.clamp01, noActiveSource=Th.noActiveSource;
+
+  /* ============================ CONTROLS ============================ */
+  function bind(id,vid,fn,fmt){ const el=$(id); el.oninput=()=>{fn(parseFloat(el.value)); $(vid).textContent=fmt();}; }
+
+  function setOctave(o){ P.octave=Math.max(-2,Math.min(2,o)); $('octVal').textContent=(P.octave>0?'+':'')+P.octave; }
+  Th.setOctave = setOctave;
+
+  Th.initControls = function(){
+    $('waveChips').onclick=e=>{ const b=e.target.closest('.chip'); if(!b)return;
+      [...$('waveChips').children].forEach(x=>x.classList.remove('active')); b.classList.add('active'); Th.setWave(b.dataset.w); };
+    $('scaleChips').onclick=e=>{ const b=e.target.closest('.chip'); if(!b)return;
+      [...$('scaleChips').children].forEach(x=>x.classList.remove('active')); b.classList.add('active'); P.scale=b.dataset.s; };
+    bind('rGli','vGli',v=>P.glide=v/1000,()=>Math.round(P.glide*1000));
+    bind('rVib','vVib',v=>P.vibRate=v/10,()=>P.vibRate.toFixed(1));
+    bind('rRes','vRes',v=>P.res=v/10,()=>P.res.toFixed(1));
+    bind('rRev','vRev',v=>P.reverb=v/100,()=>P.reverb.toFixed(2));
+    $('octDn').onclick=()=>setOctave(P.octave-1); $('octUp').onclick=()=>setOctave(P.octave+1);
+  };
+
+  /* ============================ HELP ============================ */
+  const helpOpen=()=>$('help').classList.contains('open');
+  function openHelp(){ $('help').classList.add('open'); }
+  function closeHelp(){ $('help').classList.remove('open'); }
+  function toggleHelp(){ $('help').classList.toggle('open'); }
+  Th.helpOpen = helpOpen;
+  Th.closeHelp = closeHelp;
+  Th.toggleHelp = toggleHelp;
+
+  Th.initHelp = function(){
+    $('helpBtn').onclick=openHelp;
+    $('helpClose').onclick=closeHelp;
+    $('help').addEventListener('click',e=>{ if(e.target.id==='help') closeHelp(); });
+  };
+
+  /* ============================ PLAYABLE DIAGRAM ============================ */
+  Th.initPlayableDiagram = function(){
+    const svg=$('thSvg'), fig=$('thereminFig'); if(!svg) return;
+    const toVB=e=>{ const r=svg.getBoundingClientRect();
+      return { x:(e.clientX-r.left)/r.width*260, y:(e.clientY-r.top)/r.height*180 }; };
+    function apply(e){ const p=toVB(e);
+      Input.handN=clamp01((p.x-46)/(184-46));            // left toward the antenna = low -> high pitch
+      V.tx=Input.handN; V.ty=clamp01((150-p.y)/(150-30)); // up = brighter timbre
+    }
+    svg.addEventListener('pointerdown',e=>{ e.preventDefault(); Th.initAudio();
+      Input.handDrag=true; fig.classList.add('grabbing');
+      try{ svg.setPointerCapture(e.pointerId); }catch(_){}
+      apply(e); Th.startVoice(); });
+    svg.addEventListener('pointermove',e=>{ if(Input.handDrag) apply(e); });
+    function end(){ Input.handDrag=false; fig.classList.remove('grabbing');
+      if(noActiveSource()) Th.stopVoice(); }
+    svg.addEventListener('pointerup',end);
+    svg.addEventListener('pointercancel',end);
+
+    const closeBtn=$('figClose');
+    if(closeBtn) closeBtn.addEventListener('click',()=>{
+      Input.figClosedByUser=true; fig.style.display='none';
+    });
+  };
+})(window.Th);

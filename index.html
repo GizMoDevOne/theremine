@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>THÉRÉMINE · champ X/Y</title>
+<link rel="icon" type="image/svg+xml" href="assets/img/favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Syncopate:wght@400;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+<canvas id="stage"></canvas>
+
+<div class="hud topbar">
+  <div class="leftcol">
+  <div class="brand">
+    <div class="eyebrow" data-i18n="topbar.eyebrow">Champ X/Y · onde continue</div>
+    <div class="title">Thérémine</div>
+    <div class="sub" data-i18n="topbar.sub">Balaie le champ : gauche→droite la hauteur, bas→haut le timbre. Presse pour le vibrato.</div>
+  </div>
+  <div class="readout">
+    <div class="note" id="oNote">—</div>
+    <div class="r"><span data-i18n="readout.freq.label">fréquence</span><b id="oFreq">— Hz</b></div>
+    <div class="r"><span data-i18n="readout.cut.label">timbre</span><b id="oCut">— Hz</b></div>
+    <div class="r"><span data-i18n="readout.vib.label">vibrato</span><b id="oVib">0 %</b></div>
+  </div>
+  </div>
+  <div class="midi">
+    <span class="dot" id="midiDot"><i></i><span id="midiTxt" data-i18n="midi.status.disconnected">MIDI non connecté</span></span>
+    <div class="row">
+      <select id="inSel" data-i18n-title="midi.select.input.title" title="Interprétation de l'entrée MIDI">
+        <option value="keys" data-i18n="midi.select.input.keys">Entrée : clavier</option>
+        <option value="pads" data-i18n="midi.select.input.pads">Entrée : pads X/Y</option>
+      </select>
+      <select id="mapSel" data-i18n-title="midi.select.map.title" title="Correspondance des pads">
+        <option value="generic" data-i18n="midi.select.map.generic">Pads : générique</option>
+        <option value="launchpad" data-i18n="midi.select.map.launchpad">Pads : Launchpad</option>
+      </select>
+      <button id="midiBtn" data-i18n="midi.button">Connecter MIDI</button>
+      <button id="langBtn" class="helpbtn" data-i18n-title="lang.btn.title" title="Langue / Language">EN</button>
+      <button id="helpBtn" class="helpbtn" data-i18n-title="help.btn.title" title="Aide et raccourcis (?)">?</button>
+    </div>
+  </div>
+</div>
+
+<div class="hud dock">
+  <div class="panel">
+    <div class="grp" style="min-width:150px">
+      <label data-i18n="panel.wave.label">Onde</label>
+      <div class="chips" id="waveChips">
+        <button class="chip active" data-w="sine" data-i18n="panel.wave.sine">Sinus</button>
+        <button class="chip" data-w="triangle" data-i18n="panel.wave.triangle">Tri</button>
+        <button class="chip" data-w="sawtooth" data-i18n="panel.wave.sawtooth">Dent</button>
+        <button class="chip" data-w="square" data-i18n="panel.wave.square">Carré</button>
+      </div>
+    </div>
+    <div class="sep"></div>
+    <div class="grp"><label><span data-i18n="panel.glide.label">Glissando</span><b id="vGli">80</b></label><input type="range" id="rGli" min="0" max="400" value="80"></div>
+    <div class="grp"><label><span data-i18n="panel.vib.label">Vibrato Hz</span><b id="vVib">6.0</b></label><input type="range" id="rVib" min="20" max="120" value="60"></div>
+    <div class="grp"><label><span data-i18n="panel.res.label">Résonance</span><b id="vRes">4.0</b></label><input type="range" id="rRes" min="1" max="220" value="40"></div>
+    <div class="grp"><label><span data-i18n="panel.rev.label">Réverb</span><b id="vRev">0.35</b></label><input type="range" id="rRev" min="0" max="100" value="35"></div>
+    <div class="sep"></div>
+    <div class="grp" style="min-width:180px">
+      <label data-i18n="panel.scale.label">Gamme</label>
+      <div class="chips" id="scaleChips">
+        <button class="chip active" data-s="libre" data-i18n="panel.scale.libre">Libre</button>
+        <button class="chip" data-s="penta" data-i18n="panel.scale.penta">Penta</button>
+        <button class="chip" data-s="majeur" data-i18n="panel.scale.majeur">Majeur</button>
+        <button class="chip" data-s="chroma" data-i18n="panel.scale.chroma">Chroma</button>
+      </div>
+    </div>
+    <div class="grp" style="min-width:auto">
+      <label data-i18n="panel.octave.label">Octave</label>
+      <div class="oct"><button id="octDn">–</button><span id="octVal">0</span><button id="octUp">+</button></div>
+    </div>
+  </div>
+</div>
+
+<div class="hud thereminfig" id="thereminFig" aria-hidden="true">
+  <button class="figclose" id="figClose" data-i18n-title="fig.close.title" title="Masquer le schéma">✕</button>
+  <div class="thead" data-i18n="fig.head">Schéma · jouable</div>
+  <svg id="thSvg" viewBox="0 0 260 180" width="250" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <filter id="thBlur" x="-80%" y="-80%" width="260%" height="260%"><feGaussianBlur stdDeviation="3.2"/></filter>
+    </defs>
+    <!-- isometric ground -->
+    <g stroke="#4a3c2e" fill="none" stroke-width="1" opacity=".55">
+      <path d="M22 156 L40 145 L236 145 L218 156 Z"/>
+      <path d="M70 145 L52 156 M120 145 L102 156 M170 145 L152 156"/>
+    </g>
+
+    <!-- volume loop (left) -->
+    <line x1="50" y1="122" x2="66" y2="122" stroke="#b6a48f" stroke-width="2"/>
+    <ellipse cx="35" cy="122" rx="15" ry="18" fill="none" stroke="#7a6b5a" stroke-width="1.4" transform="rotate(-8 35 122)"/>
+    <ellipse cx="32" cy="120" rx="15" ry="18" fill="none" stroke="#b6a48f" stroke-width="2" transform="rotate(-8 32 120)"/>
+    <ellipse id="thLoopGlow" cx="32" cy="120" rx="15" ry="18" fill="none" stroke="#7ce3ff" stroke-width="2.4" filter="url(#thBlur)" opacity="0.05" transform="rotate(-8 32 120)"/>
+    <text x="30" y="152" text-anchor="middle" class="thlabel" data-i18n="fig.svg.volume">VOLUME</text>
+
+    <!-- console in slight 3D: right face (shadow), top (light), front face -->
+    <polygon points="170,108 188,97 188,127 170,138" fill="rgba(0,0,0,.24)" stroke="#8a7a6b" stroke-width="1.6"/>
+    <polygon points="66,108 84,97 188,97 170,108" fill="rgba(255,225,175,.08)" stroke="#b6a48f" stroke-width="1.8"/>
+    <rect x="66" y="108" width="104" height="30" fill="rgba(255,255,255,.03)" stroke="#b6a48f" stroke-width="2"/>
+    <!-- front face details -->
+    <rect x="74" y="114" width="26" height="13" rx="2" fill="#100a04" stroke="#6a5a48" stroke-width="1"/>
+    <circle cx="132" cy="123" r="4" fill="none" stroke="#9a8a78" stroke-width="1.3"/>
+    <circle cx="148" cy="123" r="4" fill="none" stroke="#9a8a78" stroke-width="1.3"/>
+    <!-- legs -->
+    <line x1="80" y1="138" x2="80" y2="150" stroke="#b6a48f" stroke-width="2"/>
+    <line x1="158" y1="138" x2="158" y2="150" stroke="#b6a48f" stroke-width="2"/>
+    <line x1="182" y1="127" x2="182" y2="139" stroke="#8a7a6b" stroke-width="1.6"/>
+
+    <!-- pitch antenna (rises from the top, on the right) -->
+    <line x1="182" y1="99" x2="182" y2="22" stroke="#b6a48f" stroke-width="2.4" stroke-linecap="round"/>
+    <line id="thPitchGlow" x1="182" y1="99" x2="182" y2="22" stroke="#ffb347" stroke-width="2.6" stroke-linecap="round" filter="url(#thBlur)" opacity="0.05"/>
+    <circle cx="182" cy="22" r="3" fill="none" stroke="#b6a48f" stroke-width="1.6"/>
+    <text x="182" y="14" text-anchor="middle" class="thlabel" data-i18n="fig.svg.pitch">HAUTEUR</text>
+
+    <!-- field waves (right of the antenna) -->
+    <g id="thWaves" stroke="#7ce3ff" fill="none" stroke-width="1.2" opacity="0">
+      <path d="M190 42 q9 14 0 28"/><path d="M197 36 q15 20 0 40"/><path d="M204 30 q21 26 0 52"/>
+    </g>
+
+    <!-- right hand: moves closer to the antenna as pitch rises (grabbable) -->
+    <g id="thHand">
+      <circle cx="108" cy="60" r="8.5" fill="none" stroke="#ffe1b0" stroke-width="2"/>
+      <line x1="116" y1="55" x2="126" y2="53" stroke="#ffe1b0" stroke-width="2" stroke-linecap="round"/>
+      <line x1="117" y1="60" x2="127" y2="60" stroke="#ffe1b0" stroke-width="2" stroke-linecap="round"/>
+      <line x1="116" y1="65" x2="126" y2="67" stroke="#ffe1b0" stroke-width="2" stroke-linecap="round"/>
+      <circle cx="108" cy="60" r="13" fill="none" stroke="#ffe1b0" stroke-width="1" stroke-dasharray="2 3" opacity=".5"/>
+    </g>
+  </svg>
+  <div class="thcap" data-i18n="fig.caption">Attrape la main : horizontale = hauteur, verticale = timbre.</div>
+</div>
+
+<div id="help">
+  <div class="sheet">
+    <button class="close" id="helpClose" data-i18n-title="help.close.title" title="Fermer (Échap)">✕</button>
+    <div class="heyebrow" data-i18n="help.eyebrow">Aide</div>
+    <h2 data-i18n="help.h2">Comment jouer</h2>
+    <p class="lead" data-i18n="help.lead">Un thérémine à quatre entrées : souris, tactile, clavier de l'ordinateur, MIDI.</p>
+
+    <h3 data-i18n-html="help.h3.mouse">Souris &amp; tactile</h3>
+    <div class="hrow"><span class="k" data-i18n="help.mouse.move.k">Bouger dans le champ</span><span class="d" data-i18n="help.mouse.move.d">Hauteur de gauche à droite, timbre du bas vers le haut.</span></div>
+    <div class="hrow"><span class="k" data-i18n-html="help.mouse.press.k">Presser &amp; maintenir</span><span class="d" data-i18n="help.mouse.press.d">Tenir la note ; glisser = glissando continu.</span></div>
+    <div class="hrow"><span class="k" data-i18n="help.mouse.force.k">Force (doigt / stylet)</span><span class="d" data-i18n="help.mouse.force.d">Ajoute le vibrato.</span></div>
+    <div class="hrow"><span class="k" data-i18n="help.mouse.hover.k">Survol</span><span class="d" data-i18n="help.mouse.hover.d">Le réticule affiche la note qui sonnerait à cet endroit.</span></div>
+    <div class="hrow"><span class="k" data-i18n="help.mouse.fig.k">Schéma (bas à droite)</span><span class="d" data-i18n="help.mouse.fig.d">Attrape la main et déplace-la : horizontale = hauteur, verticale = timbre.</span></div>
+
+    <h3 data-i18n="help.h3.keyboard">Clavier de l'ordinateur</h3>
+    <div class="hrow"><span class="k"><kbd>A</kbd><kbd>W</kbd><kbd>S</kbd><kbd>E</kbd><kbd>D</kbd><kbd>F</kbd><kbd>T</kbd><kbd>G</kbd><kbd>Y</kbd><kbd>H</kbd><kbd>U</kbd><kbd>J</kbd><kbd>K</kbd></span><span class="d" data-i18n="help.kb.notes.d">Les notes, disposées comme un piano.</span></div>
+    <div class="hrow"><span class="k"><kbd>↑</kbd><kbd>↓</kbd></span><span class="d" data-i18n="help.kb.timbre.d">Timbre (ouverture du filtre).</span></div>
+    <div class="hrow"><span class="k"><kbd>Z</kbd><kbd>X</kbd></span><span class="d" data-i18n="help.kb.octave.d">Octave – / +.</span></div>
+    <div class="hrow"><span class="k" data-i18n-html="help.kb.shift.k"><kbd>Maj</kbd></span><span class="d" data-i18n="help.kb.shift.d">Vibrato, tant que la touche est maintenue.</span></div>
+    <div class="hrow"><span class="k" data-i18n-html="help.kb.space.k"><kbd>Espace</kbd></span><span class="d" data-i18n="help.kb.space.d">Mettre sous tension au démarrage.</span></div>
+    <div class="hrow"><span class="k" data-i18n-html="help.kb.helpkey.k"><kbd>?</kbd> · <kbd>Échap</kbd></span><span class="d" data-i18n="help.kb.helpkey.d">Ouvrir / fermer cette aide.</span></div>
+
+    <h3 data-i18n="help.h3.midikeys">Clavier MIDI — entrée « clavier »</h3>
+    <div class="hrow"><span class="k" data-i18n="help.midikeys.notes.k">Touches</span><span class="d" data-i18n="help.midikeys.notes.d">Jouent la hauteur, en legato monophonique (la dernière note l'emporte).</span></div>
+    <div class="hrow"><span class="k" data-i18n="help.midikeys.bend.k">Pitch bend</span><span class="d" data-i18n="help.midikeys.bend.d">Glissando fluide (± 2 demi-tons).</span></div>
+    <div class="hrow"><span class="k" data-i18n="help.midikeys.mod.k">Molette de modulation</span><span class="d" data-i18n="help.midikeys.mod.d">Profondeur du vibrato.</span></div>
+    <div class="hrow"><span class="k" data-i18n="help.midikeys.after.k">Aftertouch</span><span class="d" data-i18n="help.midikeys.after.d">Profondeur du vibrato (pression sur la touche).</span></div>
+    <div class="hrow"><span class="k" data-i18n="help.midikeys.sustain.k">Pédale de sustain</span><span class="d" data-i18n="help.midikeys.sustain.d">Maintient la note après le relâcher.</span></div>
+    <div class="hrow"><span class="k" data-i18n="help.midikeys.vel.k">Vélocité</span><span class="d" data-i18n="help.midikeys.vel.d">Frappe forte = timbre plus brillant.</span></div>
+
+    <h3 data-i18n="help.h3.midipads">Pads MIDI — entrée « pads X/Y »</h3>
+    <div class="hrow"><span class="k" data-i18n="help.midipads.pad.k">Un pad</span><span class="d" data-i18n="help.midipads.pad.d">Un point du champ : colonne = hauteur, ligne = timbre.</span></div>
+    <div class="hrow"><span class="k" data-i18n="help.midipads.after.k">Aftertouch (MPD218)</span><span class="d" data-i18n="help.midipads.after.d">Ajoute le vibrato.</span></div>
+    <div class="hrow"><span class="k" data-i18n="help.midipads.led.k">LED</span><span class="d" data-i18n="help.midipads.led.d">S'allument en halo autour du point joué, en retour sur le contrôleur.</span></div>
+    <div class="hrow"><span class="k" data-i18n="help.midipads.sel.k">Sélecteur « Pads »</span><span class="d" data-i18n="help.midipads.sel.d">Générique ↔ Launchpad, selon la disposition de ton contrôleur.</span></div>
+
+    <h3 data-i18n="help.h3.settings">Réglages (barre du bas)</h3>
+    <div class="hrow"><span class="k" data-i18n="panel.wave.label">Onde</span><span class="d" data-i18n="help.settings.wave.d">Sinus, triangle, dent de scie, carré.</span></div>
+    <div class="hrow"><span class="k" data-i18n="panel.glide.label">Glissando</span><span class="d" data-i18n="help.settings.glide.d">Vitesse du glissé entre deux hauteurs (0 = instantané).</span></div>
+    <div class="hrow"><span class="k" data-i18n="panel.vib.label">Vibrato Hz</span><span class="d" data-i18n="help.settings.vib.d">Vitesse de l'oscillation du vibrato.</span></div>
+    <div class="hrow"><span class="k" data-i18n="panel.res.label">Résonance</span><span class="d" data-i18n="help.settings.res.d">Accent (pic) du filtre.</span></div>
+    <div class="hrow"><span class="k" data-i18n="panel.rev.label">Réverb</span><span class="d" data-i18n="help.settings.rev.d">Quantité d'espace / de réverbération.</span></div>
+    <div class="hrow"><span class="k" data-i18n="panel.scale.label">Gamme</span><span class="d" data-i18n="help.settings.scale.d">Libre (continu, vrai thérémine) ou aimantée à une gamme.</span></div>
+    <div class="hrow"><span class="k" data-i18n="panel.octave.label">Octave</span><span class="d" data-i18n="help.settings.octave.d">Transposition générale.</span></div>
+
+    <h3 data-i18n="help.h3.controller">Brancher un contrôleur</h3>
+    <div class="hrow"><span class="k" data-i18n="help.controller.browser.k">Chrome / Edge</span><span class="d" data-i18n="help.controller.browser.d">Ouvre le fichier téléchargé dans Chrome ou Edge : le MIDI est bloqué dans l'aperçu intégré.</span></div>
+    <div class="hrow"><span class="k" data-i18n="midi.button">Connecter MIDI</span><span class="d" data-i18n="help.controller.connect.d">Puis choisis l'entrée « clavier » ou « pads X/Y » selon ton appareil.</span></div>
+  </div>
+</div>
+
+<div id="boot">
+  <div class="card">
+    <div class="eyebrow" style="text-align:center" data-i18n="topbar.eyebrow">Champ X/Y · onde continue</div>
+    <div class="title">Thérémine</div>
+    <p data-i18n-html="boot.text">Un thérémine que l'on joue dans un champ.<br>
+    <b style="color:var(--cream)">Souris / tactile</b> : bouge dans le champ, la hauteur suit X, le timbre suit Y.<br>
+    <b style="color:var(--cream)">Clavier</b> : <kbd>A W S E D F T G Y H U J</kbd> = les notes · <kbd>↑↓</kbd> le timbre · <kbd>Z X</kbd> l'octave · <kbd>Maj</kbd> le vibrato.<br>
+    <b style="color:var(--cream)">Clavier MIDI</b> : les touches jouent la hauteur (legato), le pitch bend glisse, la molette de modulation fait le vibrato.<br>
+    <b style="color:var(--cream)">Pads</b> : passe l'entrée sur « pads X/Y » ; l'aftertouch (MPD218) fait le vibrato, et le contrôleur s'allume en retour.</p>
+    <span class="go" data-i18n="boot.go">Mettre sous tension</span>
+    <div style="margin-top:16px;font-size:10.5px;color:var(--muted);letter-spacing:.04em" data-i18n-html="boot.footer">Aide &amp; raccourcis à tout moment : touche <kbd>?</kbd> ou le bouton <b style="color:var(--field-hi)">?</b> en haut à droite.</div>
+  </div>
+</div>
+
+<script src="assets/js/state.js"></script>
+<script src="assets/js/i18n.js"></script>
+<script src="assets/js/audio.js"></script>
+<script src="assets/js/input.js"></script>
+<script src="assets/js/midi.js"></script>
+<script src="assets/js/render.js"></script>
+<script src="assets/js/ui.js"></script>
+<script src="assets/js/main.js"></script>
+</body>
+</html>
