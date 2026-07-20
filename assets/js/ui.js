@@ -11,6 +11,22 @@
   function setOctave(o){ P.octave=Math.max(-2,Math.min(2,o)); $('octVal').textContent=(P.octave>0?'+':'')+P.octave; }
   Th.setOctave = setOctave;
 
+  /* bind() only goes slider -> P; this is the other way around, so the bottom bar
+     stays truthful when something else sets the params (demo mode, presets...) */
+  function chips(id,attr,val){
+    [...$(id).children].forEach(c=>c.classList.toggle('active', c.dataset[attr]===val));
+  }
+  function syncControls(){
+    $('rGli').value=Math.round(P.glide*1000);  $('vGli').textContent=Math.round(P.glide*1000);
+    $('rVib').value=Math.round(P.vibRate*10);  $('vVib').textContent=P.vibRate.toFixed(1);
+    $('rRes').value=Math.round(P.res*10);      $('vRes').textContent=P.res.toFixed(1);
+    $('rRev').value=Math.round(P.reverb*100);  $('vRev').textContent=P.reverb.toFixed(2);
+    chips('waveChips','w',P.wave); chips('scaleChips','s',P.scale);
+    setOctave(P.octave);
+  }
+  Th.snapshotParams = () => ({...P});
+  Th.setParams = patch => { Object.assign(P,patch); if(patch.wave) Th.setWave(patch.wave); syncControls(); };
+
   Th.initControls = function(){
     $('waveChips').onclick=e=>{ const b=e.target.closest('.chip'); if(!b)return;
       [...$('waveChips').children].forEach(x=>x.classList.remove('active')); b.classList.add('active'); Th.setWave(b.dataset.w); };
@@ -47,7 +63,7 @@
       Input.handN=clamp01((p.x-46)/(184-46));            // left toward the antenna = low -> high pitch
       V.tx=Input.handN; V.ty=clamp01((150-p.y)/(150-30)); // up = brighter timbre
     }
-    svg.addEventListener('pointerdown',e=>{ e.preventDefault(); Th.initAudio();
+    svg.addEventListener('pointerdown',e=>{ e.preventDefault(); Th.demoInterrupt(); Th.initAudio();
       Input.handDrag=true; fig.classList.add('grabbing');
       try{ svg.setPointerCapture(e.pointerId); }catch(_){}
       apply(e); Th.startVoice(); });

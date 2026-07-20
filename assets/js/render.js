@@ -36,6 +36,9 @@
     // rectangular field: width = bottom bar's width, height = all available vertical space
     Geo.sideW=panelW; Geo.sideH=availH; Geo.cellW=Geo.sideW/N; Geo.cellH=Geo.sideH/N;
     Geo.ox=(Geo.W-Geo.sideW)/2; Geo.oy=topH + 2;
+    // sit the "now playing" label in the gap just above the field
+    const np=$('nowPlaying');
+    if(np) np.style.top=Math.max(4,Geo.oy-24)+'px';
     // pin the diagram just above the bottom bar
     const fig=$('thereminFig');
     if(fig){

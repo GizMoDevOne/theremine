@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Demo mode: 17 short well-known pieces that play the instrument hands-free, grouped into science fiction, film & TV, video games, and classical — including Saint-Saëns' *The Swan*, one of the pieces Clara Rockmore made famous on the theremin itself. Reachable from a ▶ button in the top bar or straight from the boot screen, with the track's name shown just above the field while it plays.
+- The demo player drives the very same voice a hand would, so the X/Y field, the cursor, the oscilloscope, the playable diagram and the MIDI pad LEDs all react live without any dedicated visualization code. Notes glide into each other, repeated pitches re-attack, vibrato swells on long notes, and timbre follows pitch. Tracks may declare an accelerando (*In the Hall of the Mountain King*, *Jaws*).
+- Touching the field, pressing a key or playing a MIDI controller stops the demo instantly and restores the settings it borrowed.
+
 ## [1.0.0] - 2026-07-18
 
 ### Added

@@ -28,7 +28,7 @@
   function applyKbdPitch(){ if(Input.kbdNote!=null) V.tx=posForNote(Input.kbdNote+Input.bendSemi); }
 
   function onMIDI(e){ const [st,d1,d2]=e.data, cmd=st&0xf0;
-    if(cmd===0x90&&d2>0){ Th.initAudio();
+    if(cmd===0x90&&d2>0){ Th.demoInterrupt(); Th.initAudio();
       if(Input.inputMode==='pads'){ const cp=cellForNote(d1); if(cp){ Input.activeNote=d1;
           V.tx=cp.c/(N-1); V.ty=(N-1-cp.r)/(N-1); Th.startVoice(); } }
       else { // MIDI keyboard: note -> pitch, monophonic legato, velocity -> timbre

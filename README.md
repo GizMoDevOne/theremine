@@ -31,6 +31,7 @@ A browser-based theremin played across a continuous X/Y field: sweep left↔righ
   - [Computer keyboard](#computer-keyboard)
   - [MIDI keyboard — input mode "clavier"](#midi-keyboard--input-mode-clavier)
   - [MIDI pads — input mode "pads X/Y"](#midi-pads--input-mode-pads-xy)
+  - [Demo mode](#demo-mode)
   - [Bottom control panel](#bottom-control-panel)
 - [Project Structure](#project-structure)
 - [MIDI Implementation Details](#midi-implementation-details)
@@ -58,6 +59,7 @@ A browser-based theremin played across a continuous X/Y field: sweep left↔righ
 * **Computer keyboard:** `A W S E D F T G Y H U J K` play notes laid out like a piano; `↑ ↓` control timbre; `Z X` shift octave; `Shift` holds vibrato.
 * **MIDI keyboard input:** monophonic legato play, pitch bend (±2 semitones) for glissando, mod wheel/aftertouch/channel pressure for vibrato, velocity for timbre, sustain pedal support.
 * **MIDI pad input:** an 8×8 X/Y grid mode for pad controllers (generic layout or Akai/Novation-style Launchpad layout), with LED feedback lighting the pads nearest the played position.
+* **Demo mode:** 17 short, instantly recognizable pieces play the instrument hands-free — science fiction (*Close Encounters*, *Star Trek*, *The X-Files*, *Blade Runner*, *2001*), film and TV (*The Imperial March*, *Jaws*, *Game of Thrones*, *Hedwig's Theme*), video games (*Tetris*, *Zelda*, *Halo*), and classical, including Saint-Saëns' *The Swan*, one of the pieces Clara Rockmore made famous on the theremin itself. The player drives the very same voice your hand would, so the field, the cursor, the oscilloscope and the playable diagram all react live, with the track's name displayed above the field. Touch anything to take over.
 * **In-app help panel:** press `?` any time for a full reference of every input mode and control.
 * **Bilingual interface:** French/English, auto-detected from your browser's language, with a manual switch (top bar) that's remembered on your next visit.
 * **Responsive layout:** scales down cleanly to tablet and phone widths.
@@ -127,6 +129,14 @@ Notes drive pitch in monophonic legato (last note wins); pitch bend glides conti
 
 Each pad maps to a point on the field (column = pitch, row = timbre); aftertouch (e.g. Akai MPD218) adds vibrato; pad LEDs light up around the played point as feedback. Choose "générique" or "Launchpad" pad mapping to match your controller's layout.
 
+### Demo mode
+
+| Action                        | Effect                                                                |
+| ----------------------------- | --------------------------------------------------------------------- |
+| `▶` button (top bar)          | Opens the track list; pick one and the instrument plays it by itself   |
+| `▶ Play the demo` (boot screen) | Powers on and starts the first track straight away                    |
+| Field / key / MIDI            | Takes over: the demo stops and your own settings are restored          |
+
 ### Bottom control panel
 
 Waveform, glissando speed, vibrato rate, filter resonance, reverb amount, scale (free / pentatonic / major / chromatic), and octave.
@@ -147,7 +157,8 @@ theremine/
     │   ├── midi.js             Web MIDI: connection, note/CC handling, pad LED feedback
     │   ├── render.js            canvas: geometry, field grid, oscilloscope, cursor, reticle
     │   ├── ui.js                 controls, help panel, playable SVG diagram
-    │   └── main.js                entry script: render loop, bootstrap, wiring
+    │   ├── demo.js                hands-free playback: melodies + track picker
+    │   └── main.js                 entry script: render loop, bootstrap, wiring
     └── img/
         ├── favicon.svg           app icon
         └── theremin-screen.png   README screenshot

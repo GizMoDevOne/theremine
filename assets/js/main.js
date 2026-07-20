@@ -20,6 +20,7 @@
     requestAnimationFrame(tick);
     const dt=Math.min(0.05,(now-last)/1000); last=now;
 
+    Th.demoTick(dt);                  // demo mode drives the voice like a hand would
     // glissando: smoothing toward the target
     const tau=Math.max(0.001,P.glide), k=1-Math.exp(-dt/tau);
     V.cx+=(V.tx-V.cx)*k; V.cy+=(V.ty-V.cy)*k;
@@ -70,9 +71,11 @@
     const b=$('boot'); b.style.opacity='0'; setTimeout(()=>b.remove(),500);
     if(navigator.requestMIDIAccess) Th.connectMIDI();
   }
+  Th.powerOn = start;
 
   Th.initControls();
   Th.initHelp();
+  Th.initDemo();
   Th.initPlayableDiagram();
   Th.initMIDIControls();
   Th.initPointerInput();

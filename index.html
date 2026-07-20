@@ -39,6 +39,7 @@
         <option value="launchpad" data-i18n="midi.select.map.launchpad">Pads : Launchpad</option>
       </select>
       <button id="midiBtn" data-i18n="midi.button">Connecter MIDI</button>
+      <button id="demoBtn" class="helpbtn" data-i18n-title="demo.btn.title" title="Mode démo">▶</button>
       <button id="langBtn" class="helpbtn" data-i18n-title="lang.btn.title" title="Langue / Language">EN</button>
       <button id="helpBtn" class="helpbtn" data-i18n-title="help.btn.title" title="Aide et raccourcis (?)">?</button>
     </div>
@@ -77,6 +78,8 @@
     </div>
   </div>
 </div>
+
+<div class="hud nowplaying" id="nowPlaying" aria-live="polite"></div>
 
 <div class="hud thereminfig" id="thereminFig" aria-hidden="true">
   <button class="figclose" id="figClose" data-i18n-title="fig.close.title" title="Masquer le schéma">✕</button>
@@ -179,9 +182,99 @@
     <div class="hrow"><span class="k" data-i18n="panel.scale.label">Gamme</span><span class="d" data-i18n="help.settings.scale.d">Libre (continu, vrai thérémine) ou aimantée à une gamme.</span></div>
     <div class="hrow"><span class="k" data-i18n="panel.octave.label">Octave</span><span class="d" data-i18n="help.settings.octave.d">Transposition générale.</span></div>
 
+    <h3 data-i18n="help.h3.demo">Mode démo</h3>
+    <div class="hrow"><span class="k" data-i18n="help.demo.play.k">Bouton ▶ (en haut)</span><span class="d" data-i18n="help.demo.play.d">Choisis un morceau : l'instrument se joue tout seul et le champ s'anime.</span></div>
+    <div class="hrow"><span class="k" data-i18n="help.demo.stop.k">Reprendre la main</span><span class="d" data-i18n="help.demo.stop.d">Touche le champ, une touche ou le MIDI : la démo s'arrête et tes réglages reviennent.</span></div>
+
     <h3 data-i18n="help.h3.controller">Brancher un contrôleur</h3>
     <div class="hrow"><span class="k" data-i18n="help.controller.browser.k">Chrome / Edge</span><span class="d" data-i18n="help.controller.browser.d">Ouvre le fichier téléchargé dans Chrome ou Edge : le MIDI est bloqué dans l'aperçu intégré.</span></div>
     <div class="hrow"><span class="k" data-i18n="midi.button">Connecter MIDI</span><span class="d" data-i18n="help.controller.connect.d">Puis choisis l'entrée « clavier » ou « pads X/Y » selon ton appareil.</span></div>
+  </div>
+</div>
+
+<div id="demo">
+  <div class="sheet">
+    <button class="close" id="demoClose" data-i18n-title="demo.close.title" title="Fermer (Échap)">✕</button>
+    <div class="heyebrow" data-i18n="demo.eyebrow">Démo</div>
+    <h2 data-i18n="demo.h2">Morceaux</h2>
+    <p class="lead" data-i18n="demo.lead">L'instrument se joue tout seul : le champ, l'oscilloscope et le schéma réagissent en direct. Touche le champ pour reprendre la main.</p>
+    <div class="demolist" id="demoList">
+      <h3 data-i18n="demo.group.scifi">Science-fiction</h3>
+      <button class="demorow" data-song="ce3k">
+        <span class="dt" data-i18n="demo.track.ce3k.title">Les cinq notes</span>
+        <span class="ds" data-i18n="demo.track.ce3k.sub">Rencontres du troisième type · 1977</span>
+      </button>
+      <button class="demorow" data-song="startrek">
+        <span class="dt" data-i18n="demo.track.startrek.title">Thème principal</span>
+        <span class="ds" data-i18n="demo.track.startrek.sub">Star Trek · série originale, 1966</span>
+      </button>
+      <button class="demorow" data-song="xfiles">
+        <span class="dt" data-i18n="demo.track.xfiles.title">X-Files</span>
+        <span class="ds" data-i18n="demo.track.xfiles.sub">Aux frontières du réel · Mark Snow, 1993</span>
+      </button>
+      <button class="demorow" data-song="bladerunner">
+        <span class="dt" data-i18n="demo.track.bladerunner.title">Blade Runner</span>
+        <span class="ds" data-i18n="demo.track.bladerunner.sub">Vangelis, 1982</span>
+      </button>
+      <button class="demorow" data-song="zara">
+        <span class="dt" data-i18n="demo.track.zara.title">Ainsi parlait Zarathoustra</span>
+        <span class="ds" data-i18n="demo.track.zara.sub">2001, l'Odyssée de l'espace · Strauss, 1896</span>
+      </button>
+
+      <h3 data-i18n-html="demo.group.screen">Cinéma &amp; séries</h3>
+      <button class="demorow" data-song="imperial">
+        <span class="dt" data-i18n="demo.track.imperial.title">La Marche impériale</span>
+        <span class="ds" data-i18n="demo.track.imperial.sub">Star Wars · L'Empire contre-attaque, 1980</span>
+      </button>
+      <button class="demorow" data-song="jaws">
+        <span class="dt" data-i18n="demo.track.jaws.title">Les Dents de la mer</span>
+        <span class="ds" data-i18n="demo.track.jaws.sub">Deux notes · John Williams, 1975</span>
+      </button>
+      <button class="demorow" data-song="shire">
+        <span class="dt" data-i18n="demo.track.shire.title">La Comté</span>
+        <span class="ds" data-i18n="demo.track.shire.sub">Le Seigneur des anneaux · 2001</span>
+      </button>
+      <button class="demorow" data-song="got">
+        <span class="dt" data-i18n="demo.track.got.title">Game of Thrones</span>
+        <span class="ds" data-i18n="demo.track.got.sub">Ramin Djawadi, 2011</span>
+      </button>
+      <button class="demorow" data-song="hedwig">
+        <span class="dt" data-i18n="demo.track.hedwig.title">Le thème d'Hedwige</span>
+        <span class="ds" data-i18n="demo.track.hedwig.sub">Harry Potter · 2001</span>
+      </button>
+
+      <h3 data-i18n="demo.group.games">Jeux vidéo</h3>
+      <button class="demorow" data-song="tetris">
+        <span class="dt" data-i18n="demo.track.tetris.title">Korobeiniki</span>
+        <span class="ds" data-i18n="demo.track.tetris.sub">Tetris · chant traditionnel russe</span>
+      </button>
+      <button class="demorow" data-song="zelda">
+        <span class="dt" data-i18n="demo.track.zelda.title">Thème principal</span>
+        <span class="ds" data-i18n="demo.track.zelda.sub">The Legend of Zelda · 1986</span>
+      </button>
+      <button class="demorow" data-song="halo">
+        <span class="dt" data-i18n="demo.track.halo.title">Le chant des moines</span>
+        <span class="ds" data-i18n="demo.track.halo.sub">Halo · 2001</span>
+      </button>
+
+      <h3 data-i18n-html="demo.group.classical">Classique &amp; répertoire du thérémine</h3>
+      <button class="demorow" data-song="cygne">
+        <span class="dt" data-i18n="demo.track.cygne.title">Le Cygne</span>
+        <span class="ds" data-i18n="demo.track.cygne.sub">Saint-Saëns, 1886 · le répertoire de Clara Rockmore</span>
+      </button>
+      <button class="demorow" data-song="macabre">
+        <span class="dt" data-i18n="demo.track.macabre.title">Danse macabre</span>
+        <span class="ds" data-i18n="demo.track.macabre.sub">Saint-Saëns, 1874</span>
+      </button>
+      <button class="demorow" data-song="mountainking">
+        <span class="dt" data-i18n="demo.track.mountainking.title">Dans l'antre du roi de la montagne</span>
+        <span class="ds" data-i18n="demo.track.mountainking.sub">Grieg, 1875 · le tempo s'emballe</span>
+      </button>
+      <button class="demorow" data-song="diesirae">
+        <span class="dt" data-i18n="demo.track.diesirae.title">Dies irae</span>
+        <span class="ds" data-i18n="demo.track.diesirae.sub">Plain-chant · le motif d'effroi universel</span>
+      </button>
+    </div>
   </div>
 </div>
 
@@ -195,6 +288,7 @@
     <b style="color:var(--cream)">Clavier MIDI</b> : les touches jouent la hauteur (legato), le pitch bend glisse, la molette de modulation fait le vibrato.<br>
     <b style="color:var(--cream)">Pads</b> : passe l'entrée sur « pads X/Y » ; l'aftertouch (MPD218) fait le vibrato, et le contrôleur s'allume en retour.</p>
     <span class="go" data-i18n="boot.go">Mettre sous tension</span>
+    <div class="bootalt"><button id="bootDemo" data-i18n="boot.demo">▶ Écouter la démo</button></div>
     <div style="margin-top:16px;font-size:10.5px;color:var(--muted);letter-spacing:.04em" data-i18n-html="boot.footer">Aide &amp; raccourcis à tout moment : touche <kbd>?</kbd> ou le bouton <b style="color:var(--field-hi)">?</b> en haut à droite.</div>
   </div>
 </div>
@@ -206,6 +300,7 @@
 <script src="assets/js/midi.js"></script>
 <script src="assets/js/render.js"></script>
 <script src="assets/js/ui.js"></script>
+<script src="assets/js/demo.js"></script>
 <script src="assets/js/main.js"></script>
 </body>
 </html>

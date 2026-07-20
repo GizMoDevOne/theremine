@@ -26,7 +26,7 @@
   Th.stopVoice = stopVoice;
 
   Th.initPointerInput = function(){
-    cvs.addEventListener('pointerdown',e=>{ Th.initAudio(); const p=updateHover(e); if(!p.inside) return;
+    cvs.addEventListener('pointerdown',e=>{ Th.demoInterrupt(); Th.initAudio(); const p=updateHover(e); if(!p.inside) return;
       Input.pointerDown=true; V.tx=p.x; V.ty=p.y; startVoice(); });
     cvs.addEventListener('pointermove',e=>{ const p=updateHover(e);
       if(Input.pointerDown&&p.inside){ V.tx=p.x; V.ty=p.y; if(p.force>0) V.pressure=p.force; } });
@@ -47,15 +47,15 @@
     addEventListener('keydown',e=>{
       if(e.repeat) return;
       if(e.key==='?'){ e.preventDefault(); Th.toggleHelp(); return; }
-      if(e.code==='Escape'){ Th.closeHelp(); return; }
-      if(Th.helpOpen()) return;                       // help open: don't intercept gameplay keys
+      if(e.code==='Escape'){ Th.closeHelp(); Th.closeDemo(); return; }
+      if(Th.helpOpen()||Th.demoOpen()) return;        // a panel is open: don't intercept gameplay keys
       if(!Input.boot && e.code==='Space'){ e.preventDefault(); onStart(); return; }
       if(e.code==='ShiftLeft'||e.code==='ShiftRight'){ Input.shiftVib=true; V.pressure=1; return; }
       if(e.code==='ArrowUp'){ Input.kbCut=clamp01(Input.kbCut+0.08); V.ty=Input.kbCut; return; }
       if(e.code==='ArrowDown'){ Input.kbCut=clamp01(Input.kbCut-0.08); V.ty=Input.kbCut; return; }
       if(e.code==='KeyZ'){ Th.setOctave(P.octave-1); return; }
       if(e.code==='KeyX'){ Th.setOctave(P.octave+1); return; }
-      if(e.code in KEYMAP){ Th.initAudio(); Input.keysDown.add(e.code); playKeyboard(); }
+      if(e.code in KEYMAP){ Th.demoInterrupt(); Th.initAudio(); Input.keysDown.add(e.code); playKeyboard(); }
     });
     addEventListener('keyup',e=>{
       if(e.code==='ShiftLeft'||e.code==='ShiftRight'){ Input.shiftVib=false; if(!Input.pointerDown) V.pressure=0; }
