@@ -38,11 +38,14 @@ window.Th = window.Th || {};
     handN:0,
     boot:false,
     figClosedByUser:false,  // playable diagram manually hidden (close button)
+    camOn:false,            // webcam running
+    camActive:false,        // a gesture is currently producing sound
+    camMode:'two',          // 'two' hands (real theremin) | 'one' hand (mouse-like)
   };
 
   Th.noActiveSource = function(){
     return !Input.pointerDown && !Input.keysDown.size && Input.activeNote==null &&
-      Input.kbdNote==null && !Input.handDrag;
+      Input.kbdNote==null && !Input.handDrag && !Input.camActive;
   };
 
   /* ---- canvas geometry (rectangular field), computed by render.resize(), read by input.fieldXY() ---- */

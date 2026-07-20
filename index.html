@@ -40,6 +40,7 @@
       </select>
       <button id="midiBtn" data-i18n="midi.button">Connecter MIDI</button>
       <button id="demoBtn" class="helpbtn" data-i18n-title="demo.btn.title" title="Mode démo">▶</button>
+      <button id="camBtn" class="helpbtn" data-i18n-title="cam.btn.title" title="Jouer à la webcam">◉</button>
       <button id="langBtn" class="helpbtn" data-i18n-title="lang.btn.title" title="Langue / Language">EN</button>
       <button id="helpBtn" class="helpbtn" data-i18n-title="help.btn.title" title="Aide et raccourcis (?)">?</button>
     </div>
@@ -80,6 +81,18 @@
 </div>
 
 <div class="hud nowplaying" id="nowPlaying" aria-live="polite"></div>
+
+<div class="hud camview" id="camView">
+  <div class="camhead"><span data-i18n="cam.head">Caméra</span><span id="camStatus" data-i18n="cam.status.off">éteinte</span></div>
+  <div class="camframe">
+    <video id="camVideo" playsinline muted></video>
+    <canvas id="camOverlay" width="200" height="150"></canvas>
+  </div>
+  <div class="chips" id="camChips">
+    <button class="chip active" data-cam="two" data-i18n="cam.mode.two">2 mains</button>
+    <button class="chip" data-cam="one" data-i18n="cam.mode.one">1 main</button>
+  </div>
+</div>
 
 <div class="hud thereminfig" id="thereminFig" aria-hidden="true">
   <button class="figclose" id="figClose" data-i18n-title="fig.close.title" title="Masquer le schéma">✕</button>
@@ -181,6 +194,13 @@
     <div class="hrow"><span class="k" data-i18n="panel.rev.label">Réverb</span><span class="d" data-i18n="help.settings.rev.d">Quantité d'espace / de réverbération.</span></div>
     <div class="hrow"><span class="k" data-i18n="panel.scale.label">Gamme</span><span class="d" data-i18n="help.settings.scale.d">Libre (continu, vrai thérémine) ou aimantée à une gamme.</span></div>
     <div class="hrow"><span class="k" data-i18n="panel.octave.label">Octave</span><span class="d" data-i18n="help.settings.octave.d">Transposition générale.</span></div>
+
+    <h3 data-i18n="help.h3.cam">Webcam — jouer sans toucher</h3>
+    <div class="hrow"><span class="k" data-i18n="help.cam.start.k">Bouton ◉ (en haut)</span><span class="d" data-i18n="help.cam.start.d">Allume la caméra. Un aperçu apparaît dans le champ pour te repérer.</span></div>
+    <div class="hrow"><span class="k" data-i18n="help.cam.two.k">2 mains</span><span class="d" data-i18n="help.cam.two.d">Comme un vrai thérémine : main droite = hauteur et timbre, main gauche = volume (en bas, le silence).</span></div>
+    <div class="hrow"><span class="k" data-i18n="help.cam.one.k">1 main</span><span class="d" data-i18n="help.cam.one.d">Une seule main, comme la souris dans le champ. Le son retombe quand tu arrêtes de bouger.</span></div>
+    <div class="hrow"><span class="k" data-i18n="help.cam.vib.k">Agiter la main</span><span class="d" data-i18n="help.cam.vib.d">Ajoute le vibrato, comme un thereministe.</span></div>
+    <div class="hrow"><span class="k" data-i18n="help.cam.privacy.k">Vie privée</span><span class="d" data-i18n="help.cam.privacy.d">L'image ne quitte jamais ta machine : rien n'est envoyé, ni enregistré. Éteins la caméra et le flux est libéré.</span></div>
 
     <h3 data-i18n="help.h3.demo">Mode démo</h3>
     <div class="hrow"><span class="k" data-i18n="help.demo.play.k">Bouton ▶ (en haut)</span><span class="d" data-i18n="help.demo.play.d">Choisis un morceau : l'instrument se joue tout seul et le champ s'anime.</span></div>
@@ -301,6 +321,7 @@
 <script src="assets/js/render.js"></script>
 <script src="assets/js/ui.js"></script>
 <script src="assets/js/demo.js"></script>
+<script src="assets/js/vision.js"></script>
 <script src="assets/js/main.js"></script>
 </body>
 </html>

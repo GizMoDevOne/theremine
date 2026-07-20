@@ -31,6 +31,7 @@ A browser-based theremin played across a continuous X/Y field: sweep left↔righ
   - [Computer keyboard](#computer-keyboard)
   - [MIDI keyboard — input mode "clavier"](#midi-keyboard--input-mode-clavier)
   - [MIDI pads — input mode "pads X/Y"](#midi-pads--input-mode-pads-xy)
+  - [Webcam](#webcam)
   - [Demo mode](#demo-mode)
   - [Bottom control panel](#bottom-control-panel)
 - [Project Structure](#project-structure)
@@ -59,6 +60,7 @@ A browser-based theremin played across a continuous X/Y field: sweep left↔righ
 * **Computer keyboard:** `A W S E D F T G Y H U J K` play notes laid out like a piano; `↑ ↓` control timbre; `Z X` shift octave; `Shift` holds vibrato.
 * **MIDI keyboard input:** monophonic legato play, pitch bend (±2 semitones) for glissando, mod wheel/aftertouch/channel pressure for vibrato, velocity for timbre, sustain pedal support.
 * **MIDI pad input:** an 8×8 X/Y grid mode for pad controllers (generic layout or Akai/Novation-style Launchpad layout), with LED feedback lighting the pads nearest the played position.
+* **Webcam mode:** play by moving your hands in the air, the way a real theremin is played — no contact, no controller. *2 hands* mirrors the real instrument (right hand for pitch and timbre, left hand for continuous volume, giving real attacks and real silences); *1 hand* behaves like the mouse in the field. Shaking the pitch hand adds vibrato. Detection is plain JavaScript — frame differencing intersected with a skin chroma test — so it needs no model, no dependency and no server: the camera works even when you just double-click `index.html`. **The video never leaves your machine**: it is only read into an offscreen canvas, never sent, stored or exported, and turning the camera off releases the stream.
 * **Demo mode:** 17 short, instantly recognizable pieces play the instrument hands-free — science fiction (*Close Encounters*, *Star Trek*, *The X-Files*, *Blade Runner*, *2001*), film and TV (*The Imperial March*, *Jaws*, *Game of Thrones*, *Hedwig's Theme*), video games (*Tetris*, *Zelda*, *Halo*), and classical, including Saint-Saëns' *The Swan*, one of the pieces Clara Rockmore made famous on the theremin itself. The player drives the very same voice your hand would, so the field, the cursor, the oscilloscope and the playable diagram all react live, with the track's name displayed above the field. Touch anything to take over.
 * **In-app help panel:** press `?` any time for a full reference of every input mode and control.
 * **Bilingual interface:** French/English, auto-detected from your browser's language, with a manual switch (top bar) that's remembered on your next visit.
@@ -129,6 +131,17 @@ Notes drive pitch in monophonic legato (last note wins); pitch bend glides conti
 
 Each pad maps to a point on the field (column = pitch, row = timbre); aftertouch (e.g. Akai MPD218) adds vibrato; pad LEDs light up around the played point as feedback. Choose "générique" or "Launchpad" pad mapping to match your controller's layout.
 
+### Webcam
+
+| Action                     | Effect                                                                        |
+| -------------------------- | ----------------------------------------------------------------------------- |
+| `◉` button (top bar)       | Turns the camera on; a mirrored preview appears inside the field               |
+| Right hand (2-hand mode)   | Horizontal = pitch, vertical = timbre                                          |
+| Left hand (2-hand mode)    | Height = volume; hand down means silence                                       |
+| Single hand (1-hand mode)  | Like the mouse in the field; the sound fades when you stop moving              |
+| Shake the pitch hand       | Adds vibrato                                                                   |
+| Hold still                 | The position is held, so a note can be sustained                               |
+
 ### Demo mode
 
 | Action                        | Effect                                                                |
@@ -158,7 +171,8 @@ theremine/
     │   ├── render.js            canvas: geometry, field grid, oscilloscope, cursor, reticle
     │   ├── ui.js                 controls, help panel, playable SVG diagram
     │   ├── demo.js                hands-free playback: melodies + track picker
-    │   └── main.js                 entry script: render loop, bootstrap, wiring
+    │   ├── vision.js               webcam: motion/skin detection, hand mapping
+    │   └── main.js                  entry script: render loop, bootstrap, wiring
     └── img/
         ├── favicon.svg           app icon
         └── theremin-screen.png   README screenshot

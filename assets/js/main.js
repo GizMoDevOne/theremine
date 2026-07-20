@@ -21,6 +21,7 @@
     const dt=Math.min(0.05,(now-last)/1000); last=now;
 
     Th.demoTick(dt);                  // demo mode drives the voice like a hand would
+    Th.visionTick(dt);                // webcam mode: hands in the air drive it too
     // glissando: smoothing toward the target
     const tau=Math.max(0.001,P.glide), k=1-Math.exp(-dt/tau);
     V.cx+=(V.tx-V.cx)*k; V.cy+=(V.ty-V.cy)*k;
@@ -76,6 +77,7 @@
   Th.initControls();
   Th.initHelp();
   Th.initDemo();
+  Th.initVision();
   Th.initPlayableDiagram();
   Th.initMIDIControls();
   Th.initPointerInput();

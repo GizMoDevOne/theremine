@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] - 2026-07-20
+
+### Added
+- Webcam mode: play the instrument by moving your hands in the air, the way the real theremin is played. Two mappings, switchable from the preview card — *2 hands* mirrors a real theremin (right hand for pitch and timbre, left hand for continuous volume, so notes have real attacks and real silences), *1 hand* behaves like the mouse in the field. Shaking the pitch hand adds vibrato.
+- Detection is plain JavaScript with no dependency: frame differencing intersected with a skin chroma test, an auto-calibrating threshold, and a weighted centroid per zone. A WASM hand model would have needed `fetch()`, which `file://` blocks — this keeps the page playable by double-click, camera included. Vibrato reads the zone's motion energy rather than the tracked position, so a smooth sweep across the field is not mistaken for a shake.
+- A hand that stops moving holds its last position instead of being lost, so a note can be sustained still.
+- The video never leaves the machine: it is only read into an offscreen canvas, never sent, stored or exported. Turning the camera off releases the stream.
+
+### Changed
+- `Th.audioActivate()` takes an optional level, so a source can drive continuous volume instead of the fixed gain.
+
 ## [1.1.0] - 2026-07-20
 
 ### Added

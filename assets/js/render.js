@@ -39,6 +39,14 @@
     // sit the "now playing" label in the gap just above the field
     const np=$('nowPlaying');
     if(np) np.style.top=Math.max(4,Geo.oy-24)+'px';
+    // webcam preview: inside the field's bottom-left corner (the field is full width,
+    // so a card beside it would be hidden by the overlap rule below)
+    const cam=$('camView');
+    if(cam){
+      const ch=cam.getBoundingClientRect().height||248;
+      cam.style.left=(Geo.ox+14)+'px';
+      cam.style.top=(Geo.oy+Geo.sideH-ch-14)+'px';
+    }
     // pin the diagram just above the bottom bar
     const fig=$('thereminFig');
     if(fig){

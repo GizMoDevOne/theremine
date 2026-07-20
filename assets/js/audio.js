@@ -49,8 +49,9 @@
 
   Th.setWave = function(w){ P.wave=w; if(A){A.o1.type=w;A.o2.type=w;} };
 
-  Th.audioActivate = function(on){
+  /* level (0..1) is optional: webcam mode passes the left hand's height for continuous volume */
+  Th.audioActivate = function(on, level){
     if(!A) return; const t=A.c.currentTime;
-    A.vca.gain.setTargetAtTime(on?0.26:0.0001, t, on?0.015:0.09);
+    A.vca.gain.setTargetAtTime(on?0.26*(level===undefined?1:level):0.0001, t, on?0.015:0.09);
   };
 })(window.Th);
