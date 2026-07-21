@@ -65,13 +65,16 @@
       const wouldOverlap = figLeftEdge < fieldRight + 12 || Geo.W < figW + 48;
       fig.style.display = (Input.figClosedByUser || wouldOverlap) ? 'none' : '';
     }
-    // full-screen buffer: only reallocated when the size really changes, since a window
-    // drag fires resize continuously and each buffer is several megabytes
-    const bw=Geo.W*Geo.DPR, bh=Geo.H*Geo.DPR;
+    // the persistence buffer is field-sized, not screen-sized: the trace is clipped to the
+    // field anyway, so a full-screen buffer was faded and composited for nothing every frame.
+    // The transform carries the field's origin, so the drawing code keeps its page coordinates.
+    // Only reallocated when the size really changes — a window drag fires resize continuously.
+    const bw=Math.max(1,Math.round(Geo.sideW*Geo.DPR)), bh=Math.max(1,Math.round(Geo.sideH*Geo.DPR));
     if(!scopeCvs){ scopeCvs=document.createElement('canvas'); }
     if(scopeCvs.width!==bw||scopeCvs.height!==bh){ scopeCvs.width=bw; scopeCvs.height=bh; }
-    sctx=scopeCvs.getContext('2d'); sctx.setTransform(Geo.DPR,0,0,Geo.DPR,0,0);
-    sctx.fillStyle='#0a0705'; sctx.fillRect(0,0,Geo.W,Geo.H);
+    sctx=scopeCvs.getContext('2d');
+    sctx.setTransform(Geo.DPR,0,0,Geo.DPR,-Geo.ox*Geo.DPR,-Geo.oy*Geo.DPR);
+    sctx.fillStyle='#0a0705'; sctx.fillRect(Geo.ox,Geo.oy,Geo.sideW,Geo.sideH);
   }
   // coalesce bursts of resize events into a single recompute per frame
   let resizePending=false;
@@ -134,7 +137,7 @@
     // fade the persistent layer
     sctx.globalCompositeOperation='source-over';
     sctx.fillStyle=reduce?'rgba(10,7,5,0.5)':'rgba(10,7,5,0.16)';
-    sctx.fillRect(0,0,Geo.W,Geo.H);
+    sctx.fillRect(Geo.ox,Geo.oy,Geo.sideW,Geo.sideH);
 
     const A=Th.getAudioNodes();
     if(A){
@@ -166,7 +169,7 @@
     }
     // composite the phosphor layer
     ctx.globalCompositeOperation='lighter';
-    ctx.drawImage(scopeCvs,0,0,Geo.W,Geo.H);
+    ctx.drawImage(scopeCvs,Geo.ox,Geo.oy,Geo.sideW,Geo.sideH);
     ctx.globalCompositeOperation='source-over';
   }
 
