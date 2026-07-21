@@ -79,12 +79,12 @@
 
 <div class="hud nowplaying" id="nowPlaying" aria-live="polite"></div>
 
+<!-- source only: the frame is painted into the field by render.js, never shown here.
+     Kept rendered at 1px rather than display:none, which can suspend decoding. -->
+<video id="camVideo" class="camsrc" playsinline muted aria-hidden="true"></video>
+
 <div class="hud camview" id="camView">
   <div class="camhead"><span data-i18n="cam.head">Caméra</span><span id="camStatus" data-i18n="cam.status.off">éteinte</span></div>
-  <div class="camframe">
-    <video id="camVideo" playsinline muted></video>
-    <canvas id="camOverlay" width="360" height="270"></canvas>
-  </div>
   <div class="chips" id="camChips">
     <button class="chip active" data-cam="two" data-i18n="cam.mode.two">2 mains</button>
     <button class="chip" data-cam="one" data-i18n="cam.mode.one">1 main</button>

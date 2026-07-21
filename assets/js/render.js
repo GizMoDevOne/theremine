@@ -10,6 +10,7 @@
   const cvs = $('stage'), ctx = cvs.getContext('2d',{alpha:false});
   const reduce = matchMedia('(prefers-reduced-motion:reduce)').matches;
   const FIELD_RADIUS = 15;   // matches .panel's border-radius (bottom bar), so the field lines up with it visually
+  const CAM_ALPHA = 0.30;    // webcam backdrop: enough to place your hands, never enough to fight the trace
   let scopeCvs, sctx;
 
   function roundedRectPath(c,x,y,w,h,r){
@@ -43,16 +44,12 @@
     // sit the "now playing" label in the gap just above the field
     const np=$('nowPlaying');
     if(np) np.style.top=Math.max(4,Geo.oy-24)+'px';
-    // webcam preview: centred along the field's bottom edge (the field is full width,
-    // so a card beside it would be hidden by the overlap rule below)
+    // camera strip: sits on the field's bottom edge. The frame itself is the field's
+    // backdrop now, so this is only the status line and the mode switch. Horizontal
+    // centring is left to CSS, which does not have to chase the status text's width.
     const cam=$('camView');
-    if(cam){
-      const cr=cam.getBoundingClientRect();
-      const cw=cr.width||372, ch=cr.height||342;
-      cam.style.left=(Geo.ox+(Geo.sideW-cw)/2)+'px';
-      // the card is tall enough to outgrow a short field: keep it inside rather than
-      // letting it climb over the top bar
-      cam.style.top=Math.max(Geo.oy+8, Geo.oy+Geo.sideH-ch-14)+'px';
+    if(cam&&cam.classList.contains('on')){
+      cam.style.top=(Geo.oy+Geo.sideH-cam.getBoundingClientRect().height-14)+'px';
     }
     // pin the diagram just above the bottom bar
     const fig=$('thereminFig');
@@ -97,14 +94,32 @@
     ctx.save();
     roundedRectPath(ctx, Geo.ox, Geo.oy, Geo.sideW, Geo.sideH, FIELD_RADIUS);
     ctx.clip();
+    drawCamera();
     drawField();
     drawScope(dt);
+    // the tracking markers belong above the trace but below the cursor, which stays the lead
+    if(Th.drawVisionOverlay) Th.drawVisionOverlay(ctx, Geo.ox, Geo.oy, Geo.sideW, Geo.sideH);
     drawCursor();
     ctx.restore();
 
     drawReticle();
   }
   Th.render = render;
+
+  /* webcam frame as the field's backdrop: mirrored, and stretched to the field rather than
+     letterboxed. The analysis squeezes the whole frame into its own buffer without regard
+     for aspect ratio, so stretching here is what keeps the tracking marker over the real
+     hand — the same reasoning that made the old preview object-fit:fill. */
+  function drawCamera(){
+    const v = Th.getCamVideo && Th.getCamVideo();
+    if(!v) return;
+    ctx.save();
+    ctx.globalCompositeOperation='source-over';
+    ctx.globalAlpha=CAM_ALPHA;
+    ctx.translate(Geo.ox+Geo.sideW, Geo.oy); ctx.scale(-1,1);
+    try{ ctx.drawImage(v,0,0,Geo.sideW,Geo.sideH); }catch(_){}   // a frame can vanish mid-teardown
+    ctx.restore();
+  }
 
   /* cold X/Y field + pads */
   function drawField(){

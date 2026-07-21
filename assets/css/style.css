@@ -96,24 +96,22 @@ input[type=range]::-moz-range-thumb{width:13px;height:13px;border-radius:50%;bac
 kbd{font-family:"DM Mono",monospace;font-size:10px;background:rgba(124,227,255,.12);border:1px solid var(--line);
   border-radius:4px;padding:1px 6px;color:var(--field-hi)}
 
-/* webcam preview, centred on the field's bottom edge by render.resize() */
-.camview{display:none;width:372px;padding:9px 6px 6px;border:1px solid var(--line);border-radius:12px;
+/* the video itself fills the field, painted by render.js; only the status and the mode
+   switch live here, as a compact strip placed on the field's bottom edge by resize() */
+.camsrc{position:fixed;left:-10px;top:-10px;width:1px;height:1px;opacity:0;pointer-events:none}
+/* the field is always centred in the window, so centring here is a CSS matter: the strip
+   is shrink-to-fit and its width follows the status text, which JS would have to chase */
+.camview{display:none;left:50%;transform:translateX(-50%);min-width:210px;
+  padding:9px 10px 8px;border:1px solid var(--line);border-radius:12px;
   background:rgba(14,11,8,.55);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
   box-shadow:0 18px 50px -30px #000;pointer-events:auto}
 .camview.on{display:block}
-.camhead{display:flex;justify-content:space-between;align-items:baseline;gap:8px;
+.camhead{display:flex;justify-content:space-between;align-items:baseline;gap:14px;
   font-size:8.5px;letter-spacing:.26em;text-transform:uppercase;color:var(--field-hi);opacity:.7;
-  padding:0 3px 6px}
+  padding:0 3px 7px}
 .camhead span:last-child{letter-spacing:.06em;text-transform:none;color:var(--muted);opacity:.9;
   text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.camframe{position:relative;width:360px;height:270px;margin:0 auto;border-radius:8px;overflow:hidden;
-  background:#0a0705;border:1px solid rgba(124,227,255,.12)}
-/* fill, not cover: the analysis squeezes the whole frame into its buffer, so showing
-   the whole frame too is what keeps the tracking reticle over the actual hand */
-.camframe video{width:100%;height:100%;object-fit:fill;transform:scaleX(-1);display:block;opacity:.55}
-.camframe canvas{position:absolute;inset:0;width:100%;height:100%}
-.camview .chips{margin-top:7px;justify-content:center}
-@media (max-width:820px){ .camview{display:none!important} }
+.camview .chips{justify-content:center}
 
 /* now playing: track name sitting just above the field, positioned by render.resize() */
 .nowplaying{left:0;right:0;text-align:center;font-size:10.5px;letter-spacing:.22em;text-transform:uppercase;

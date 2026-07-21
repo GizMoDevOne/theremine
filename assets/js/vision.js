@@ -26,7 +26,7 @@
   const VIB_SPAN=16000;        // ...and the span above it that reaches full depth
   const HOLD_RELEASE=0.35;     // 'one' mode: seconds of stillness before releasing
 
-  let stream=null, video=null, work=null, wctx=null, overlay=null, octx=null;
+  let stream=null, video=null, work=null, wctx=null;
   let lum=null, dif=null, primed=false, acc=0;
   let pitchX=0.5, pitchY=0.5, vol=0, volTarget=0, stillT=0;
   let jitter=0;
@@ -107,38 +107,46 @@
     if(Th.noActiveSource()) Th.stopVoice(); else Th.audioActivate(true,1);
   }
 
+  function ready(){ return Input.camOn && video && video.readyState>=2; }
+
   Th.visionTick = function(dt){
-    if(!Input.camOn || !video || video.readyState<2) return;
+    if(!ready()) return;
     acc+=dt; if(acc<RATE) return; acc=0;
-    analyse(); apply(); drawOverlay();
+    analyse(); apply();
   };
 
   /* ============================ OVERLAY ============================ */
-  function drawOverlay(){
-    if(!octx) return;
-    const w=overlay.width, h=overlay.height;
-    octx.clearRect(0,0,w,h);
+  /* render.js owns the canvas and paints the frame as the field's backdrop; this file
+     only knows what the tracking means, so it draws the markers on request. The tracked
+     values are already in mirrored space, which is screen space — nothing to convert. */
+  Th.getCamVideo = function(){ return ready() ? video : null; };
+
+  Th.drawVisionOverlay = function(c,x,y,w,h){
+    if(!ready()) return;
+    c.save();
+    c.globalCompositeOperation='source-over';
     if(Input.camMode==='two'){
-      const sx=w*SPLIT;
-      octx.strokeStyle='rgba(124,227,255,.35)'; octx.lineWidth=1;
-      octx.beginPath(); octx.moveTo(sx,0); octx.lineTo(sx,h); octx.stroke();
-      // volume gauge along the left edge
-      octx.fillStyle='rgba(124,227,255,.5)';
-      octx.fillRect(2,h-4-(h-8)*vol,3,(h-8)*vol+2);
+      const sx=x+w*SPLIT;
+      c.strokeStyle='rgba(124,227,255,.35)'; c.lineWidth=1;
+      c.beginPath(); c.moveTo(sx,y); c.lineTo(sx,y+h); c.stroke();
+      // volume gauge along the field's left edge
+      c.fillStyle='rgba(124,227,255,.5)';
+      c.fillRect(x+4,y+h-6-(h-12)*vol,4,(h-12)*vol+2);
       if(volSeen){
-        octx.fillStyle='rgba(124,227,255,.9)';
-        octx.beginPath(); octx.arc(sx*0.5,h-(h*vol),4,0,Math.PI*2); octx.fill();
+        c.fillStyle='rgba(124,227,255,.9)';
+        c.beginPath(); c.arc(x+w*SPLIT*0.5,y+h-h*vol,5,0,Math.PI*2); c.fill();
       }
     }
     if(pitchSeen || Input.camActive){
-      const sx = Input.camMode==='two' ? w*SPLIT : 0;
-      const x = sx+(w-sx)*pitchX, y = h-h*pitchY;
-      octx.strokeStyle='rgba(255,179,71,.9)'; octx.lineWidth=1.5;
-      octx.beginPath(); octx.arc(x,y,7,0,Math.PI*2); octx.stroke();
-      octx.fillStyle='rgba(255,225,175,.95)';
-      octx.beginPath(); octx.arc(x,y,2.5,0,Math.PI*2); octx.fill();
+      const sx = Input.camMode==='two' ? x+w*SPLIT : x;
+      const px = sx+(x+w-sx)*pitchX, py = y+h-h*pitchY;
+      c.strokeStyle='rgba(255,179,71,.9)'; c.lineWidth=1.5;
+      c.beginPath(); c.arc(px,py,9,0,Math.PI*2); c.stroke();
+      c.fillStyle='rgba(255,225,175,.95)';
+      c.beginPath(); c.arc(px,py,3,0,Math.PI*2); c.fill();
     }
-  }
+    c.restore();
+  };
 
   /* ============================ CAMERA ============================ */
   function setStatus(key){
@@ -216,16 +224,14 @@
     release();
     if(stream){ stream.getTracks().forEach(t=>t.stop()); stream=null; }
     if(video) video.srcObject=null;
-    if(octx) octx.clearRect(0,0,overlay.width,overlay.height);
     const card=$('camView'); if(card) card.classList.remove('on');
     setStatus('cam.status.off');   // so a past failure does not greet the next opening
     setBtn(false);
   }
 
   Th.initVision = function(){
-    video=$('camVideo'); overlay=$('camOverlay');
-    if(!video||!overlay) return;
-    octx=overlay.getContext('2d');
+    video=$('camVideo');
+    if(!video) return;
     work=document.createElement('canvas'); work.width=W; work.height=H;
     wctx=work.getContext('2d',{willReadFrequently:true});
     lum=new Float32Array(W*H); dif=new Float32Array(W*H);
