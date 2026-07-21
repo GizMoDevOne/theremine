@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- The webcam feed now fills the whole X/Y field, behind the oscilloscope and at 30% opacity, instead of sitting in a 360×270 thumbnail in a corner. You read your hands and the trace at once. This falls out of the existing compositing rather than fighting it: the grid, the trace and the cursor all paint in `lighter` and the persistence layer is a near-black, so nothing covers the video. The frame is stretched to the field rather than letterboxed — the analysis squeezes the whole frame into its own buffer regardless of aspect ratio, so stretching is what keeps the tracking marker over the real hand, the same reasoning that made the old preview `object-fit: fill`. What remains of the camera card is a status line and the mode switch, and it now stays reachable below 820px, where hiding the whole card used to make the mode chips unusable while the camera was running.
+
+### Changed
+- The two webfonts are self-hosted under `assets/fonts/` (47 KB, latin subset), so "zero dependencies" is now true of the network too: the page keeps its typography offline and sends no request to a third party — which sat awkwardly beside the promise that the camera feed never leaves your machine. Syncopate ships at 700 alone, the only weight the interface uses; the previous request asked for 400 as well and never applied it. Licenses are bundled as their terms require (DM Mono under the SIL OFL 1.1, Syncopate under Apache 2.0).
+- `vision.js` no longer owns a canvas. It exposes what it knows — the current frame and how to draw the tracking markers — and `render.js`, which owns the canvas, calls it; the same contract `Th.getAudioNodes()` already used. The separate preview canvas is gone.
+
+### Performance
+- The oscilloscope's persistence buffer is sized to the field instead of the window. The trace was already clipped to the field, so every frame faded and composited a full-screen buffer to show a field-sized picture — 37% wasted pixels at 1440×900, and proportionally more on a wide screen where the field is a smaller share of the window. The buffer now carries the field's origin in its transform, which leaves the drawing code on page coordinates.
+
 ### Fixed
 - Browser shortcuts no longer play notes. The global `keydown` listener had no guard, so `Ctrl+S` landed on a note key — and because the save dialog then took the focus, the matching `keyup` never arrived and the note went on sounding indefinitely. Typing in the MIDI selects or the dock sliders played notes for the same reason.
 - Holding a key while the page loses focus (an Alt+Tab) no longer leaves the note and the vibrato stuck on. Losing focus releases the local sources only: MIDI and the webcam keep sending while the tab is in the background, and cutting them would have been wrong.

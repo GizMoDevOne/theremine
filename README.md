@@ -60,7 +60,7 @@ A browser-based theremin played across a continuous X/Y field: sweep left↔righ
 * **Computer keyboard:** `A W S E D F T G Y H U J K` play notes laid out like a piano; `↑ ↓` control timbre; `Z X` shift octave; `Shift` holds vibrato.
 * **MIDI keyboard input:** monophonic legato play, pitch bend (±2 semitones) for glissando, mod wheel/aftertouch/channel pressure for vibrato, velocity for timbre, sustain pedal support.
 * **MIDI pad input:** an 8×8 X/Y grid mode for pad controllers (generic layout or Akai/Novation-style Launchpad layout), with LED feedback lighting the pads nearest the played position.
-* **Webcam mode:** play by moving your hands in the air, the way a real theremin is played — no contact, no controller. *2 hands* mirrors the real instrument (right hand for pitch and timbre, left hand for continuous volume, giving real attacks and real silences); *1 hand* behaves like the mouse in the field. Shaking the pitch hand adds vibrato. Detection is plain JavaScript — frame differencing intersected with a skin chroma test — so it needs no model and no dependency to download. Note that the camera itself still requires a secure context: serve the folder over `http://localhost` (or any `https://` host), since browsers do not expose `getUserMedia` to a page opened from `file://`. **The video never leaves your machine**: it is only read into an offscreen canvas, never sent, stored or exported, and turning the camera off releases the stream.
+* **Webcam mode:** play by moving your hands in the air, the way a real theremin is played — no contact, no controller. *2 hands* mirrors the real instrument (right hand for pitch and timbre, left hand for continuous volume, giving real attacks and real silences); *1 hand* behaves like the mouse in the field. Shaking the pitch hand adds vibrato. The feed becomes the field's own backdrop, filling it edge to edge behind the oscilloscope at low opacity, so you read your hands and the trace at the same time. Detection is plain JavaScript — frame differencing intersected with a skin chroma test — so it needs no model and no dependency to download. Note that the camera itself still requires a secure context: serve the folder over `http://localhost` (or any `https://` host), since browsers do not expose `getUserMedia` to a page opened from `file://`. **The video never leaves your machine**: it is only read into an offscreen canvas, never sent, stored or exported, and turning the camera off releases the stream.
 * **Demo mode:** 17 short, instantly recognizable pieces play the instrument hands-free — science fiction (*Close Encounters*, *Star Trek*, *The X-Files*, *Blade Runner*, *2001*), film and TV (*The Imperial March*, *Jaws*, *Game of Thrones*, *Hedwig's Theme*), video games (*Tetris*, *Zelda*, *Halo*), and classical, including Saint-Saëns' *The Swan*, one of the pieces Clara Rockmore made famous on the theremin itself. The player drives the very same voice your hand would, so the field, the cursor, the oscilloscope and the playable diagram all react live, with the track's name displayed above the field. Touch anything to take over.
 * **In-app help panel:** press `?` any time for a full reference of every input mode and control.
 * **Bilingual interface:** French/English, auto-detected from your browser's language, with a manual switch (top bar) that's remembered on your next visit.
@@ -70,7 +70,7 @@ A browser-based theremin played across a continuous X/Y field: sweep left↔righ
 
 <img src="https://img.shields.io/badge/HTML5-E34F26?style=for-the-badge&logo=html5&logoColor=white"><img src="https://img.shields.io/badge/CSS3-1572B6?style=for-the-badge&logo=css3&logoColor=white"><img src="https://img.shields.io/badge/JavaScript-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black"><img src="https://img.shields.io/badge/Web%20Audio%20API-8A2BE2?style=for-the-badge"><img src="https://img.shields.io/badge/Web%20MIDI%20API-101218?style=for-the-badge">
 
-Zero dependencies: vanilla JavaScript, the Web Audio API for synthesis, and the Web MIDI API for controller input. No bundler, no build step.
+Zero dependencies, and that includes the network: vanilla JavaScript, the Web Audio API for synthesis, the Web MIDI API for controller input, and the two webfonts self-hosted under `assets/fonts/` (47 KB, latin subset). Nothing is fetched from a third party at any point. No bundler, no build step.
 
 ## Getting Started
 
@@ -136,7 +136,7 @@ Each pad maps to a point on the field (column = pitch, row = timbre); aftertouch
 
 | Action                     | Effect                                                                        |
 | -------------------------- | ----------------------------------------------------------------------------- |
-| `◉` button (top bar)       | Turns the camera on; a mirrored preview appears at the bottom of the field     |
+| `◉` button (top bar)       | Turns the camera on; the mirrored feed becomes the field's own backdrop        |
 | Right hand (2-hand mode)   | Horizontal = pitch, vertical = timbre                                          |
 | Left hand (2-hand mode)    | Height = volume; hand down means silence                                       |
 | Single hand (1-hand mode)  | Like the mouse in the field; the sound fades when you stop moving              |
@@ -176,6 +176,12 @@ theremine/
     │   ├── demo.js                hands-free playback: melodies + track picker
     │   ├── vision.js               webcam: motion/skin detection, hand mapping
     │   └── main.js                  entry script: render loop, bootstrap, wiring
+    ├── fonts/
+    │   ├── dm-mono-400.woff2      self-hosted webfonts, latin subset (47 KB total)
+    │   ├── dm-mono-500.woff2
+    │   ├── syncopate-700.woff2
+    │   ├── LICENSE-DM-Mono.txt      SIL Open Font License 1.1
+    │   └── LICENSE-Syncopate.txt    Apache License 2.0
     └── img/
         ├── favicon.svg           app icon
         └── theremin-screen.png   README screenshot
