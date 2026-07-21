@@ -5,17 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.3.0] - 2026-07-21
 
 ### Added
 - The webcam feed now fills the whole X/Y field, behind the oscilloscope and at 30% opacity, instead of sitting in a 360×270 thumbnail in a corner. You read your hands and the trace at once. This falls out of the existing compositing rather than fighting it: the grid, the trace and the cursor all paint in `lighter` and the persistence layer is a near-black, so nothing covers the video. The frame is stretched to the field rather than letterboxed — the analysis squeezes the whole frame into its own buffer regardless of aspect ratio, so stretching is what keeps the tracking marker over the real hand, the same reasoning that made the old preview `object-fit: fill`. What remains of the camera card is a status line and the mode switch, and it now stays reachable below 820px, where hiding the whole card used to make the mode chips unusable while the camera was running.
 
 ### Changed
 - The two webfonts are self-hosted under `assets/fonts/` (47 KB, latin subset), so "zero dependencies" is now true of the network too: the page keeps its typography offline and sends no request to a third party — which sat awkwardly beside the promise that the camera feed never leaves your machine. Syncopate ships at 700 alone, the only weight the interface uses; the previous request asked for 400 as well and never applied it. Licenses are bundled as their terms require (DM Mono under the SIL OFL 1.1, Syncopate under Apache 2.0).
-- `vision.js` no longer owns a canvas. It exposes what it knows — the current frame and how to draw the tracking markers — and `render.js`, which owns the canvas, calls it; the same contract `Th.getAudioNodes()` already used. The separate preview canvas is gone.
-
-### Performance
 - The oscilloscope's persistence buffer is sized to the field instead of the window. The trace was already clipped to the field, so every frame faded and composited a full-screen buffer to show a field-sized picture — 37% wasted pixels at 1440×900, and proportionally more on a wide screen where the field is a smaller share of the window. The buffer now carries the field's origin in its transform, which leaves the drawing code on page coordinates.
+- `vision.js` no longer owns a canvas. It exposes what it knows — the current frame and how to draw the tracking markers — and `render.js`, which owns the canvas, calls it; the same contract `Th.getAudioNodes()` already used. The separate preview canvas is gone.
+- Removed dead code (`xFromFreq`, the `Th.snap`/`getLang`/`stopCam` exports, `hover.fy`, the vision trail buffer, a `touches` branch in `fieldXY` that Pointer Events never take, one orphaned i18n key), and factored the chip-selection logic that had been written out three times.
+- `README.md` claimed the webcam worked from a double-clicked `index.html`. It does not, and never did: `getUserMedia` is unavailable outside a secure context — which the app itself already reported as "https requis". The claim contradicted the README's own Prerequisites section.
 
 ### Fixed
 - Browser shortcuts no longer play notes. The global `keydown` listener had no guard, so `Ctrl+S` landed on a note key — and because the save dialog then took the focus, the matching `keyup` never arrived and the note went on sounding indefinitely. Typing in the MIDI selects or the dock sliders played notes for the same reason.
@@ -26,11 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A blocked `localStorage` no longer breaks the interface. Access throws where site data is turned off — Safari over `file://`, the very case this project is built for — and the unguarded call aborted the rest of `i18n.js`, leaving the page on its hardcoded French markup with a dead language button.
 - An `AudioContext` that starts suspended is now resumed: `initAudio()` returned early on every later gesture, so there was no way to recover.
 - A window drag no longer allocates a multi-megabyte canvas per `resize` event. The events coalesce into one recompute per frame, and the buffer is only reallocated when its pixel size actually changes.
-
-### Changed
-- Accessibility: the diagram card carried `aria-hidden` while holding a focusable close button; the viewport locked scale with `user-scalable=no` (WCAG 1.4.4); icon-only buttons had a `title` but no accessible name, leaving screen readers to announce the glyph; and neither modal had dialog semantics or managed focus. All four are fixed, the accessible names coming from the translation strings that already existed.
-- Removed dead code (`xFromFreq`, the `Th.snap`/`getLang`/`stopCam` exports, `hover.fy`, the vision trail buffer, a `touches` branch in `fieldXY` that Pointer Events never take, one orphaned i18n key), and factored the chip-selection logic that had been written out three times.
-- `README.md` claimed the webcam worked from a double-clicked `index.html`. It does not, and never did: `getUserMedia` is unavailable outside a secure context — which the app itself already reported as "https requis". The claim contradicted the README's own Prerequisites section.
+- Four accessibility defects: the diagram card carried `aria-hidden` while holding a focusable close button; the viewport locked scale with `user-scalable=no` (WCAG 1.4.4); icon-only buttons had a `title` but no accessible name, leaving screen readers to announce the glyph; and neither modal had dialog semantics or managed focus. The accessible names come from the translation strings that already existed.
 
 ## [1.2.0] - 2026-07-21
 
