@@ -31,21 +31,28 @@
     const tb=document.querySelector('.topbar'), dk=document.querySelector('.dock'), pn=document.querySelector('.dock .panel');
     const topH=tb?tb.getBoundingClientRect().height:70;
     const dockH=dk?dk.getBoundingClientRect().height:96;
-    const availH=Math.max(180, Geo.H - topH - dockH - 20);
+    // the field starts level with the note readout rather than below the whole top bar:
+    // the brand block above it is dead space, and the field reclaims that height
+    const note=$('oNote');
+    const fieldTop=note?Math.round(note.getBoundingClientRect().top):topH+2;
+    const availH=Math.max(180, Geo.H - fieldTop - dockH - 20);
     const panelW=pn?pn.getBoundingClientRect().width:Geo.W*0.92;
     // rectangular field: width = bottom bar's width, height = all available vertical space
     Geo.sideW=panelW; Geo.sideH=availH; Geo.cellW=Geo.sideW/N; Geo.cellH=Geo.sideH/N;
-    Geo.ox=(Geo.W-Geo.sideW)/2; Geo.oy=topH + 2;
+    Geo.ox=(Geo.W-Geo.sideW)/2; Geo.oy=fieldTop;
     // sit the "now playing" label in the gap just above the field
     const np=$('nowPlaying');
     if(np) np.style.top=Math.max(4,Geo.oy-24)+'px';
-    // webcam preview: inside the field's bottom-left corner (the field is full width,
+    // webcam preview: centred along the field's bottom edge (the field is full width,
     // so a card beside it would be hidden by the overlap rule below)
     const cam=$('camView');
     if(cam){
-      const ch=cam.getBoundingClientRect().height||248;
-      cam.style.left=(Geo.ox+14)+'px';
-      cam.style.top=(Geo.oy+Geo.sideH-ch-14)+'px';
+      const cr=cam.getBoundingClientRect();
+      const cw=cr.width||372, ch=cr.height||342;
+      cam.style.left=(Geo.ox+(Geo.sideW-cw)/2)+'px';
+      // the card is tall enough to outgrow a short field: keep it inside rather than
+      // letting it climb over the top bar
+      cam.style.top=Math.max(Geo.oy+8, Geo.oy+Geo.sideH-ch-14)+'px';
     }
     // pin the diagram just above the bottom bar
     const fig=$('thereminFig');

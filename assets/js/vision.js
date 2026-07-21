@@ -154,17 +154,52 @@
     b.title=Th.t(key);
   }
 
+  // an infrared sensor opens like a camera but gives nothing a skin test can use
+  function infrared(d){ return /\bir\b|infra/i.test(d.label||'') ? 1 : 0; }
+
+  // machines commonly declare more video inputs than they really have — an unplugged
+  // capture card, a Windows Hello sensor — and the browser's default pick is often one
+  // of those ghosts, which fails as NotReadableError. Try the default, then walk the list.
+  async function openStream(){
+    const base={width:640,height:480};   // preview is 512 wide; asking for less would upscale a blurry image
+    try{
+      return await navigator.mediaDevices.getUserMedia({video:base,audio:false});
+    }catch(err){
+      const n=err&&err.name;
+      if(n==='NotAllowedError'||n==='SecurityError') throw err;   // a refusal is final, do not nag
+      let cams=[];
+      try{
+        cams=(await navigator.mediaDevices.enumerateDevices())
+          .filter(d=>d.kind==='videoinput')
+          .sort((a,b)=>infrared(a)-infrared(b));
+      }catch(_){}
+      for(const c of cams){
+        try{
+          return await navigator.mediaDevices.getUserMedia(
+            {video:{deviceId:{exact:c.deviceId},width:base.width,height:base.height},audio:false});
+        }catch(_){}
+      }
+      throw err;   // nothing opened: report the first error, the most meaningful one
+    }
+  }
+
   async function startCam(){
     const card=$('camView'); if(card){ card.classList.add('on'); Th.resize(); }  // measurable only once shown
+    // the API only exists in a secure context, so over file:// or plain http on a
+    // remote host there is nothing to call — say so instead of blaming the camera
+    if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){
+      setStatus('cam.status.insecure'); return;
+    }
     setStatus('cam.status.asking'); setBtn(true);
     try{
-      stream=await navigator.mediaDevices.getUserMedia({video:{width:320,height:240},audio:false});
+      stream=await openStream();
     }catch(err){
       stream=null; setBtn(false);
       const n=err&&err.name;
       // be specific: "no camera" would be wrong for a refusal or a camera already in use
       setStatus(n==='NotAllowedError'||n==='SecurityError' ? 'cam.status.denied'
               : n==='NotFoundError'||n==='OverconstrainedError' ? 'cam.status.none'
+              : n==='NotReadableError'||n==='AbortError' ? 'cam.status.busy'
               : 'cam.status.error');
       return;
     }
@@ -183,6 +218,7 @@
     if(video) video.srcObject=null;
     if(octx) octx.clearRect(0,0,overlay.width,overlay.height);
     const card=$('camView'); if(card) card.classList.remove('on');
+    setStatus('cam.status.off');   // so a past failure does not greet the next opening
     setBtn(false);
   }
   Th.stopCam = stopCam;
@@ -196,7 +232,12 @@
     lum=new Float32Array(W*H); dif=new Float32Array(W*H);
 
     const btn=$('camBtn');
-    if(btn) btn.addEventListener('click',()=>{ Input.camOn||stream ? stopCam() : startCam(); });
+    // toggle on what is on screen, not on the stream: a camera that failed to start
+    // still leaves the card open, and that card has to be closable
+    const card=$('camView');
+    if(btn) btn.addEventListener('click',()=>{
+      card&&card.classList.contains('on') ? stopCam() : startCam();
+    });
 
     const chips=$('camChips');
     if(chips) chips.addEventListener('click',e=>{

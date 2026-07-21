@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.2.0] - 2026-07-20
+## [1.2.0] - 2026-07-21
 
 ### Added
 - Webcam mode: play the instrument by moving your hands in the air, the way the real theremin is played. Two mappings, switchable from the preview card — *2 hands* mirrors a real theremin (right hand for pitch and timbre, left hand for continuous volume, so notes have real attacks and real silences), *1 hand* behaves like the mouse in the field. Shaking the pitch hand adds vibrato.
@@ -15,6 +15,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - `Th.audioActivate()` takes an optional level, so a source can drive continuous volume instead of the fixed gain.
+- The X/Y field now starts level with the note readout instead of below the whole top bar, reclaiming the dead space the title block was holding and giving the playable area noticeably more height.
+- The webcam preview sits centred on the field's bottom edge rather than in its bottom-left corner, and is larger (360×270). The stream is requested at 640×480 so the preview is not an upscale of a smaller frame; the analysis still runs on its own 160×120 buffer, so nothing costs more.
+- The preview uses `object-fit: fill` rather than `cover`. The analysis squeezes the whole frame into its buffer without regard for aspect ratio, so displaying the whole frame is what keeps the tracking reticle over the actual hand — with `cover`, a camera returning 16:9 would have had its sides cropped and the reticle would drift away from the hand.
+
+### Fixed
+- The camera reported "camera unavailable" for every failure other than a refusal or a missing device, which hid the two causes users actually hit. A page opened over `file://` or plain `http` on a remote host now reports "https required" (the API simply does not exist outside a secure context), and a device that cannot be read now reports "camera busy".
+- The camera card could not be closed once a start had failed: the button toggled on the stream, which stays null after an error, while the card had already been shown. It now toggles on what is actually on screen.
+- `getUserMedia()` was left to pick the default video input, which on machines exposing phantom devices — an unplugged capture card, a Windows Hello infrared sensor — is often not a usable camera, and failed as `NotReadableError` while the real webcam sat idle. It now falls back to enumerating the video inputs and trying each one explicitly, infrared sensors last since they open without ever yielding anything a skin test can use. A permission refusal stays final, so the fallback never turns into a burst of prompts.
+- Turning the camera off resets the status label, so a past failure no longer greets the next opening.
 
 ## [1.1.0] - 2026-07-20
 

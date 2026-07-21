@@ -78,6 +78,7 @@ Zero dependencies: vanilla JavaScript, the Web Audio API for synthesis, and the 
 
 - A modern browser with Web Audio API support (Chrome, Firefox, Safari, Edge).
 - **Web MIDI requires Chrome or Edge.** If you want to use a MIDI controller, open `index.html` directly in one of those browsers rather than an embedded preview — Web MIDI is blocked in most in-app/embedded viewers.
+- **The webcam mode requires a secure context**, i.e. `https://` or `http://localhost`. Browsers do not expose the camera to a page opened from `file://`, so serve the folder locally if you want to play with your hands.
 
 ### Installation
 
@@ -90,7 +91,7 @@ Zero dependencies: vanilla JavaScript, the Web Audio API for synthesis, and the 
 
 2. **Open `index.html` in your browser** — no build step, no install required, no server needed. Double-clicking the file works.
 
-    If you'd rather serve it locally (e.g. for MIDI testing across devices on the same network):
+    If you'd rather serve it locally (required for the webcam mode, and handy for MIDI testing across devices on the same network):
 
     ```bash
     # If you have Python installed:
@@ -135,12 +136,14 @@ Each pad maps to a point on the field (column = pitch, row = timbre); aftertouch
 
 | Action                     | Effect                                                                        |
 | -------------------------- | ----------------------------------------------------------------------------- |
-| `◉` button (top bar)       | Turns the camera on; a mirrored preview appears inside the field               |
+| `◉` button (top bar)       | Turns the camera on; a mirrored preview appears at the bottom of the field     |
 | Right hand (2-hand mode)   | Horizontal = pitch, vertical = timbre                                          |
 | Left hand (2-hand mode)    | Height = volume; hand down means silence                                       |
 | Single hand (1-hand mode)  | Like the mouse in the field; the sound fades when you stop moving              |
 | Shake the pitch hand       | Adds vibrato                                                                   |
 | Hold still                 | The position is held, so a note can be sustained                               |
+
+If the status beside *Caméra* is not *bouge les mains*: **https requis** means the page is not in a secure context — serve it over `http://localhost` instead of opening the file directly; **accès refusé** means the browser permission was declined; **caméra occupée** means no video input could be opened, usually because another app is holding the camera.
 
 ### Demo mode
 
