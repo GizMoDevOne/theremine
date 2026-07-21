@@ -40,7 +40,10 @@
       if(Input.pointerDown&&p.inside){ V.tx=p.x; V.ty=p.y; if(p.force>0) V.pressure=p.force; } });
     cvs.addEventListener('pointerenter',e=>updateHover(e));
     addEventListener('pointerup',()=>{ Input.pointerDown=false; if(!Input.keysDown.size) stopVoice(); if(!Input.shiftVib) V.pressure=0; });
-    cvs.addEventListener('pointerleave',()=>{ hover.on=false; if(Input.pointerDown){Input.pointerDown=false; if(!Input.keysDown.size) stopVoice();} });
+    // pointercancel too: on touch a system gesture aborts the stroke without a pointerup
+    function leave(){ hover.on=false; if(Input.pointerDown){Input.pointerDown=false; if(!Input.keysDown.size) stopVoice();} }
+    cvs.addEventListener('pointerleave',leave);
+    cvs.addEventListener('pointercancel',leave);
   };
 
   /* -- computer keyboard -- */

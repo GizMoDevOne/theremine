@@ -404,14 +404,20 @@
   }
   Th.applyLanguage = applyLanguage;
 
-  const stored = localStorage.getItem(STORAGE_KEY);
-  applyLanguage(stored === 'fr' || stored === 'en' ? stored : detectLang());
+  /* storage is not always reachable — Safari over file://, or site data turned off —
+     and it throws on access there. Unguarded, that would abort the rest of this file
+     and leave the page stuck on the hardcoded French markup. */
+  function stored(){ try{ return localStorage.getItem(STORAGE_KEY); }catch(_){ return null; } }
+  function remember(v){ try{ localStorage.setItem(STORAGE_KEY, v); }catch(_){} }
+
+  const saved = stored();
+  applyLanguage(saved === 'fr' || saved === 'en' ? saved : detectLang());
 
   const langBtn = Th.$('langBtn');
   if(langBtn){
     langBtn.addEventListener('click', ()=>{
       const next = lang === 'fr' ? 'en' : 'fr';
-      localStorage.setItem(STORAGE_KEY, next);
+      remember(next);
       applyLanguage(next);
     });
   }

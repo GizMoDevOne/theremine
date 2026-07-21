@@ -9,7 +9,9 @@
   Th.getAudioNodes = function(){ return A; };
 
   Th.initAudio = function initAudio(){
-    if(A) return;
+    // every gesture entry point calls this, so it doubles as the recovery path for a
+    // context that started (or was left) suspended — Safari does that
+    if(A){ if(A.c.state==='suspended') A.c.resume(); return; }
     const c=new (window.AudioContext||window.webkitAudioContext)();
     const master=c.createGain(); master.gain.value=0.9;
     const comp=c.createDynamicsCompressor();

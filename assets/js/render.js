@@ -65,11 +65,21 @@
       const wouldOverlap = figLeftEdge < fieldRight + 12 || Geo.W < figW + 48;
       fig.style.display = (Input.figClosedByUser || wouldOverlap) ? 'none' : '';
     }
-    scopeCvs=document.createElement('canvas'); scopeCvs.width=Geo.W*Geo.DPR; scopeCvs.height=Geo.H*Geo.DPR;
+    // full-screen buffer: only reallocated when the size really changes, since a window
+    // drag fires resize continuously and each buffer is several megabytes
+    const bw=Geo.W*Geo.DPR, bh=Geo.H*Geo.DPR;
+    if(!scopeCvs){ scopeCvs=document.createElement('canvas'); }
+    if(scopeCvs.width!==bw||scopeCvs.height!==bh){ scopeCvs.width=bw; scopeCvs.height=bh; }
     sctx=scopeCvs.getContext('2d'); sctx.setTransform(Geo.DPR,0,0,Geo.DPR,0,0);
     sctx.fillStyle='#0a0705'; sctx.fillRect(0,0,Geo.W,Geo.H);
   }
-  addEventListener('resize',resize);
+  // coalesce bursts of resize events into a single recompute per frame
+  let resizePending=false;
+  addEventListener('resize',()=>{
+    if(resizePending) return;
+    resizePending=true;
+    requestAnimationFrame(()=>{ resizePending=false; resize(); });
+  });
   Th.resize = resize;
 
   /* ============================ RENDER ============================ */
