@@ -10,6 +10,9 @@
   Th.initMIDIControls = function(){
     if($('mapSel')) $('mapSel').onchange=e=>Input.layout=e.target.value;
     if($('inSel')) $('inSel').onchange=e=>Input.inputMode=e.target.value;
+    // start() already connects on power-on; the button is for a controller plugged in
+    // afterwards, or for retrying once a refused permission has been granted
+    if($('midiBtn')) $('midiBtn').onclick=connectMIDI;
   };
 
   async function connectMIDI(){

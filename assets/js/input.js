@@ -25,6 +25,14 @@
   Th.startVoice = startVoice;
   Th.stopVoice = stopVoice;
 
+  /* a key or a button held when the page loses focus never gets its keyup/pointerup:
+     drop every local source, but leave MIDI and the webcam playing — they keep sending
+     while the tab is in the background, and cutting them would be wrong */
+  function releaseAll(){
+    Input.keysDown.clear(); Input.shiftVib=false; Input.pointerDown=false;
+    if(Th.noActiveSource()){ V.pressure=0; stopVoice(); }
+  }
+
   Th.initPointerInput = function(){
     cvs.addEventListener('pointerdown',e=>{ Th.demoInterrupt(); Th.initAudio(); const p=updateHover(e); if(!p.inside) return;
       Input.pointerDown=true; V.tx=p.x; V.ty=p.y; startVoice(); });
@@ -43,9 +51,16 @@
     V.tx=posForNote(48+semi); V.ty=Input.kbCut; startVoice();                   // 48 = C3 on A ; octave transposes via freqFromX
   }
 
+  const isTyping = t => !!t && (t.tagName==='SELECT'||t.tagName==='INPUT'||t.tagName==='TEXTAREA'||t.isContentEditable);
+
   Th.initKeyboardInput = function(onStart){
+    addEventListener('blur',releaseAll);
+    document.addEventListener('visibilitychange',()=>{ if(document.hidden) releaseAll(); });
     addEventListener('keydown',e=>{
       if(e.repeat) return;
+      // Ctrl+S and friends land on note keys: the dialog then steals the focus and the
+      // keyup never arrives, leaving the note droning. Same for typing in a select/slider.
+      if(e.ctrlKey||e.metaKey||e.altKey||isTyping(e.target)) return;
       if(e.key==='?'){ e.preventDefault(); Th.toggleHelp(); return; }
       if(e.code==='Escape'){ Th.closeHelp(); Th.closeDemo(); return; }
       if(Th.helpOpen()||Th.demoOpen()) return;        // a panel is open: don't intercept gameplay keys

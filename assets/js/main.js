@@ -84,5 +84,9 @@
   Th.initKeyboardInput(start);
   $('boot').addEventListener('click',start);
 
-  Th.resize(); last=performance.now(); requestAnimationFrame(tick);
+  Th.resize();
+  // the geometry is measured off the readout and the bottom bar, both sized by webfonts
+  // that land after this script: without a second pass the field is offset until a resize
+  if(document.fonts) document.fonts.ready.then(Th.resize);
+  last=performance.now(); requestAnimationFrame(tick);
 })(window.Th);
