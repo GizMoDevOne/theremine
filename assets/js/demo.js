@@ -179,8 +179,8 @@
 
   /* ------------------------------- panel ------------------------------- */
   const demoOpen = Th.demoOpen = () => { const p=$('demo'); return !!p && p.classList.contains('open'); };
-  function openDemo(){ $('demo').classList.add('open'); }
-  function closeDemo(){ $('demo').classList.remove('open'); }
+  function openDemo(){ Th.openSheet('demo'); }
+  function closeDemo(){ Th.closeSheet('demo'); }
   Th.closeDemo = closeDemo;
 
   function markRow(){

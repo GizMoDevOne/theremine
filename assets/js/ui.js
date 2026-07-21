@@ -40,10 +40,27 @@
   };
 
   /* ============================ HELP ============================ */
+  /* shared by the demo panel: move the focus into the sheet on open and hand it back
+     to whatever opened it on close, so the modal is usable without a mouse */
+  let lastFocus=null;
+  function openSheet(id){
+    lastFocus=document.activeElement;
+    const p=$(id); p.classList.add('open');
+    const close=p.querySelector('.close'); if(close) close.focus();
+  }
+  function closeSheet(id){
+    const p=$(id); if(!p.classList.contains('open')) return;   // Escape closes both blindly
+    p.classList.remove('open');
+    if(lastFocus&&lastFocus.focus) lastFocus.focus();
+    lastFocus=null;
+  }
+  Th.openSheet = openSheet;
+  Th.closeSheet = closeSheet;
+
   const helpOpen=()=>$('help').classList.contains('open');
-  function openHelp(){ $('help').classList.add('open'); }
-  function closeHelp(){ $('help').classList.remove('open'); }
-  function toggleHelp(){ $('help').classList.toggle('open'); }
+  function openHelp(){ openSheet('help'); }
+  function closeHelp(){ closeSheet('help'); }
+  function toggleHelp(){ helpOpen()?closeHelp():openHelp(); }
   Th.helpOpen = helpOpen;
   Th.closeHelp = closeHelp;
   Th.toggleHelp = toggleHelp;

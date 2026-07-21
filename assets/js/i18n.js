@@ -396,7 +396,12 @@
     document.documentElement.lang = lang;
     document.querySelectorAll('[data-i18n]').forEach(el=>{ el.textContent = Th.t(el.getAttribute('data-i18n')); });
     document.querySelectorAll('[data-i18n-html]').forEach(el=>{ el.innerHTML = Th.t(el.getAttribute('data-i18n-html')); });
-    document.querySelectorAll('[data-i18n-title]').forEach(el=>{ el.title = Th.t(el.getAttribute('data-i18n-title')); });
+    // aria-label as well as title: these are all icon-only buttons, whose accessible
+    // name would otherwise be the glyph itself ("black circle button")
+    document.querySelectorAll('[data-i18n-title]').forEach(el=>{
+      const label = Th.t(el.getAttribute('data-i18n-title'));
+      el.title = label; el.setAttribute('aria-label', label);
+    });
     const names = TR[lang].noteNames;
     Th.NAMES.splice(0, Th.NAMES.length, ...names);   // in-place mutation: preserves the reference used by noteName()
     const langBtn = Th.$('langBtn');

@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>THÉRÉMINE · champ X/Y</title>
 <link rel="icon" type="image/svg+xml" href="assets/img/favicon.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -11,7 +11,7 @@
 <link rel="stylesheet" href="assets/css/style.css">
 </head>
 <body>
-<canvas id="stage"></canvas>
+<canvas id="stage" aria-hidden="true"></canvas>
 
 <div class="hud topbar">
   <div class="leftcol">
@@ -94,10 +94,10 @@
   </div>
 </div>
 
-<div class="hud thereminfig" id="thereminFig" aria-hidden="true">
+<div class="hud thereminfig" id="thereminFig">
   <button class="figclose" id="figClose" data-i18n-title="fig.close.title" title="Masquer le schéma">✕</button>
   <div class="thead" data-i18n="fig.head">Schéma · jouable</div>
-  <svg id="thSvg" viewBox="0 0 260 180" width="250" xmlns="http://www.w3.org/2000/svg">
+  <svg id="thSvg" viewBox="0 0 260 180" width="250" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
     <defs>
       <filter id="thBlur" x="-80%" y="-80%" width="260%" height="260%"><feGaussianBlur stdDeviation="3.2"/></filter>
     </defs>
@@ -150,11 +150,11 @@
   <div class="thcap" data-i18n="fig.caption">Attrape la main : horizontale = hauteur, verticale = timbre.</div>
 </div>
 
-<div id="help">
+<div id="help" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
   <div class="sheet">
     <button class="close" id="helpClose" data-i18n-title="help.close.title" title="Fermer (Échap)">✕</button>
     <div class="heyebrow" data-i18n="help.eyebrow">Aide</div>
-    <h2 data-i18n="help.h2">Comment jouer</h2>
+    <h2 id="helpTitle" data-i18n="help.h2">Comment jouer</h2>
     <p class="lead" data-i18n="help.lead">Un thérémine à quatre entrées : souris, tactile, clavier de l'ordinateur, MIDI.</p>
 
     <h3 data-i18n-html="help.h3.mouse">Souris &amp; tactile</h3>
@@ -212,11 +212,11 @@
   </div>
 </div>
 
-<div id="demo">
+<div id="demo" role="dialog" aria-modal="true" aria-labelledby="demoTitle">
   <div class="sheet">
     <button class="close" id="demoClose" data-i18n-title="demo.close.title" title="Fermer (Échap)">✕</button>
     <div class="heyebrow" data-i18n="demo.eyebrow">Démo</div>
-    <h2 data-i18n="demo.h2">Morceaux</h2>
+    <h2 id="demoTitle" data-i18n="demo.h2">Morceaux</h2>
     <p class="lead" data-i18n="demo.lead">L'instrument se joue tout seul : le champ, l'oscilloscope et le schéma réagissent en direct. Touche le champ pour reprendre la main.</p>
     <div class="demolist" id="demoList">
       <h3 data-i18n="demo.group.scifi">Science-fiction</h3>
