@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+- Browser shortcuts no longer play notes. The global `keydown` listener had no guard, so `Ctrl+S` landed on a note key — and because the save dialog then took the focus, the matching `keyup` never arrived and the note went on sounding indefinitely. Typing in the MIDI selects or the dock sliders played notes for the same reason.
+- Holding a key while the page loses focus (an Alt+Tab) no longer leaves the note and the vibrato stuck on. Losing focus releases the local sources only: MIDI and the webcam keep sending while the tab is in the background, and cutting them would have been wrong.
+- The "Connecter MIDI" button was wired to nothing at all — MIDI only ever connected automatically at power-on, so a controller plugged in afterwards, or a permission refused then granted, had no way back. The help panel told users to click it.
+- The playing field is measured again once the webfonts land. Its geometry is read off the note readout and the bottom bar, both sized by fonts that arrive after the scripts, so the field was offset until the first window resize.
+- A cancelled touch (`pointercancel`, fired when a system gesture aborts a stroke) left the voice sounding: only `pointerup` and `pointerleave` were handled.
+- A blocked `localStorage` no longer breaks the interface. Access throws where site data is turned off — Safari over `file://`, the very case this project is built for — and the unguarded call aborted the rest of `i18n.js`, leaving the page on its hardcoded French markup with a dead language button.
+- An `AudioContext` that starts suspended is now resumed: `initAudio()` returned early on every later gesture, so there was no way to recover.
+- A window drag no longer allocates a multi-megabyte canvas per `resize` event. The events coalesce into one recompute per frame, and the buffer is only reallocated when its pixel size actually changes.
+
+### Changed
+- Accessibility: the diagram card carried `aria-hidden` while holding a focusable close button; the viewport locked scale with `user-scalable=no` (WCAG 1.4.4); icon-only buttons had a `title` but no accessible name, leaving screen readers to announce the glyph; and neither modal had dialog semantics or managed focus. All four are fixed, the accessible names coming from the translation strings that already existed.
+- Removed dead code (`xFromFreq`, the `Th.snap`/`getLang`/`stopCam` exports, `hover.fy`, the vision trail buffer, a `touches` branch in `fieldXY` that Pointer Events never take, one orphaned i18n key), and factored the chip-selection logic that had been written out three times.
+- `README.md` claimed the webcam worked from a double-clicked `index.html`. It does not, and never did: `getUserMedia` is unavailable outside a secure context — which the app itself already reported as "https requis". The claim contradicted the README's own Prerequisites section.
+
 ## [1.2.0] - 2026-07-21
 
 ### Added
