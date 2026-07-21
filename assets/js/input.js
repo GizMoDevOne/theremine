@@ -7,15 +7,15 @@
   const cvs = $('stage');
 
   /* -- mouse / touch field -- */
-  const hover = Th.hover = { x:0, y:0, on:false, inside:false, fx:0.5, fy:0.5 };
+  const hover = Th.hover = { x:0, y:0, on:false, inside:false, fx:0.5 };
 
-  function fieldXY(e){ const r=cvs.getBoundingClientRect(), t=e.touches?e.touches[0]:e;
-    const px=(t.clientX-r.left-Geo.ox)/Geo.sideW, py=(t.clientY-r.top-Geo.oy)/Geo.sideH;
+  function fieldXY(e){ const r=cvs.getBoundingClientRect();
+    const px=(e.clientX-r.left-Geo.ox)/Geo.sideW, py=(e.clientY-r.top-Geo.oy)/Geo.sideH;
     return { x:clamp01(px), y:clamp01(1-py), inside:px>=-0.02&&px<=1.02&&py>=-0.02&&py<=1.02,
              force:(e.pointerType&&e.pointerType!=='mouse')?(e.pressure||0):0 }; }
 
   function updateHover(e){ const r=cvs.getBoundingClientRect(), p=fieldXY(e);
-    hover.x=e.clientX-r.left; hover.y=e.clientY-r.top; hover.on=true; hover.inside=p.inside; hover.fx=p.x; hover.fy=p.y; return p; }
+    hover.x=e.clientX-r.left; hover.y=e.clientY-r.top; hover.on=true; hover.inside=p.inside; hover.fx=p.x; return p; }
 
   /* ---- voice lifecycle ---- */
   function startVoice(){ if(!V.active){ V.active=true; Th.audioActivate(true);

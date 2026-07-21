@@ -56,7 +56,6 @@ window.Th = window.Th || {};
 
   /* ============================ MAPPINGS ============================ */
   function freqFromX(x){ let f=FMIN*Math.pow(FMAX/FMIN, clamp01(x)) * Math.pow(2,P.octave); return snap(f); }
-  function xFromFreq(f){ f/=Math.pow(2,P.octave); return clamp01(Math.log(f/FMIN)/Math.log(FMAX/FMIN)); }
   function cutFromY(y){ return CMIN*Math.pow(CMAX/CMIN, clamp01(y)); }
   function snap(f){ const sc=SCALES[P.scale]; if(!sc) return f;
     let midi=69+12*Math.log2(f/440), base=Math.round(midi), best=base, bd=99;
@@ -67,9 +66,7 @@ window.Th = window.Th || {};
   function posForNote(n){ const f=440*Math.pow(2,(n-69)/12); return clamp01(Math.log(f/FMIN)/Math.log(FMAX/FMIN)); }
 
   Th.freqFromX = freqFromX;
-  Th.xFromFreq = xFromFreq;
   Th.cutFromY = cutFromY;
-  Th.snap = snap;
   Th.noteName = noteName;
   Th.posForNote = posForNote;
 })(window.Th);

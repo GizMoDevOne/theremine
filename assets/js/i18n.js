@@ -181,7 +181,6 @@
       'help.h3.controller': `Brancher un contrôleur`,
       'help.controller.browser.k': `Chrome / Edge`,
       'help.controller.browser.d': `Ouvre le fichier téléchargé dans Chrome ou Edge : le MIDI est bloqué dans l'aperçu intégré.`,
-      'help.controller.connect.k': `Connecter MIDI`,
       'help.controller.connect.d': `Puis choisis l'entrée « clavier » ou « pads X/Y » selon ton appareil.`,
       'boot.text': `Un thérémine que l'on joue dans un champ.<br>
     <b style="color:var(--cream)">Souris / tactile</b> : bouge dans le champ, la hauteur suit X, le timbre suit Y.<br>
@@ -364,7 +363,6 @@
       'help.h3.controller': `Connecting a controller`,
       'help.controller.browser.k': `Chrome / Edge`,
       'help.controller.browser.d': `Open the downloaded file in Chrome or Edge: MIDI is blocked in embedded previews.`,
-      'help.controller.connect.k': `Connect MIDI`,
       'help.controller.connect.d': `Then pick "keyboard" or "X/Y pads" input to match your device.`,
       'boot.text': `A theremin played across a field.<br>
     <b style="color:var(--cream)">Mouse / touch</b>: move in the field, pitch follows X, timbre follows Y.<br>
@@ -389,7 +387,6 @@
     const entry = (TR[lang] && TR[lang][key] !== undefined) ? TR[lang][key] : (TR.fr[key] || key);
     return typeof entry === 'function' ? entry(vars) : entry;
   };
-  Th.getLang = function(){ return lang; };
 
   function applyLanguage(next){
     lang = next;

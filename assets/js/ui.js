@@ -16,6 +16,11 @@
   function chips(id,attr,val){
     [...$(id).children].forEach(c=>c.classList.toggle('active', c.dataset[attr]===val));
   }
+  /* the click direction, shared with the webcam mode chips */
+  function setActiveChip(group,el){
+    [...group.children].forEach(c=>c.classList.toggle('active', c===el));
+  }
+  Th.setActiveChip = setActiveChip;
   function syncControls(){
     $('rGli').value=Math.round(P.glide*1000);  $('vGli').textContent=Math.round(P.glide*1000);
     $('rVib').value=Math.round(P.vibRate*10);  $('vVib').textContent=P.vibRate.toFixed(1);
@@ -29,9 +34,9 @@
 
   Th.initControls = function(){
     $('waveChips').onclick=e=>{ const b=e.target.closest('.chip'); if(!b)return;
-      [...$('waveChips').children].forEach(x=>x.classList.remove('active')); b.classList.add('active'); Th.setWave(b.dataset.w); };
+      setActiveChip($('waveChips'),b); Th.setWave(b.dataset.w); };
     $('scaleChips').onclick=e=>{ const b=e.target.closest('.chip'); if(!b)return;
-      [...$('scaleChips').children].forEach(x=>x.classList.remove('active')); b.classList.add('active'); P.scale=b.dataset.s; };
+      setActiveChip($('scaleChips'),b); P.scale=b.dataset.s; };
     bind('rGli','vGli',v=>P.glide=v/1000,()=>Math.round(P.glide*1000));
     bind('rVib','vVib',v=>P.vibRate=v/10,()=>P.vibRate.toFixed(1));
     bind('rRes','vRes',v=>P.res=v/10,()=>P.res.toFixed(1));

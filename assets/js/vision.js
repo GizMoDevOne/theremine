@@ -29,7 +29,7 @@
   let stream=null, video=null, work=null, wctx=null, overlay=null, octx=null;
   let lum=null, dif=null, primed=false, acc=0;
   let pitchX=0.5, pitchY=0.5, vol=0, volTarget=0, stillT=0;
-  const trail=[]; let jitter=0;
+  let jitter=0;
   let volSeen=false, pitchSeen=false;
 
   /* ============================ DETECTION ============================ */
@@ -206,7 +206,7 @@
     Th.initAudio();
     video.srcObject=stream;
     try{ await video.play(); }catch(_){}
-    primed=false; acc=0; vol=0; volTarget=0; stillT=HOLD_RELEASE; trail.length=0;
+    primed=false; acc=0; vol=0; volTarget=0; stillT=HOLD_RELEASE;
     Input.camOn=true;
     setStatus('cam.status.on');
   }
@@ -221,7 +221,6 @@
     setStatus('cam.status.off');   // so a past failure does not greet the next opening
     setBtn(false);
   }
-  Th.stopCam = stopCam;
 
   Th.initVision = function(){
     video=$('camVideo'); overlay=$('camOverlay');
@@ -242,8 +241,7 @@
     const chips=$('camChips');
     if(chips) chips.addEventListener('click',e=>{
       const c=e.target.closest('.chip'); if(!c) return;
-      [...chips.children].forEach(x=>x.classList.remove('active'));
-      c.classList.add('active');
+      Th.setActiveChip(chips,c);
       release();                              // no note left hanging across the switch
       Input.camMode=c.dataset.cam;
       vol=0; volTarget=0; stillT=HOLD_RELEASE;
