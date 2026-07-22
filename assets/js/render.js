@@ -97,8 +97,9 @@
     drawCamera();
     drawField();
     drawScope(dt);
-    // the tracking markers belong above the trace but below the cursor, which stays the lead
-    if(Th.drawVisionOverlay) Th.drawVisionOverlay(ctx, Geo.ox, Geo.oy, Geo.sideW, Geo.sideH);
+    // the tracking markers belong above the trace but below the cursor, which stays the lead.
+    // they share the webcam's letterbox rect, so a marker keeps sitting over the real hand
+    if(Th.drawVisionOverlay){ const r=camRect(); Th.drawVisionOverlay(ctx, r.x, r.y, r.w, r.h); }
     drawCursor();
     ctx.restore();
 
@@ -106,18 +107,29 @@
   }
   Th.render = render;
 
-  /* webcam frame as the field's backdrop: mirrored, and stretched to the field rather than
-     letterboxed. The analysis squeezes the whole frame into its own buffer without regard
-     for aspect ratio, so stretching here is what keeps the tracking marker over the real
-     hand — the same reasoning that made the old preview object-fit:fill. */
+  /* the webcam's letterbox: the frame centred inside the field with its aspect ratio kept
+     (contain), so it never looks stretched. drawVisionOverlay() is handed this same rect, so
+     the tracking marker still lands over the real hand — the whole frame maps 1:1 to the rect. */
+  function camRect(){
+    const v = Th.getCamVideo && Th.getCamVideo();
+    const fx=Geo.ox, fy=Geo.oy, fw=Geo.sideW, fh=Geo.sideH;
+    if(!v) return {x:fx,y:fy,w:fw,h:fh};
+    const ar=(v.videoWidth||4)/(v.videoHeight||3);
+    let w=fw, h=fw/ar;
+    if(h>fh){ h=fh; w=fh*ar; }
+    return {x:fx+(fw-w)/2, y:fy+(fh-h)/2, w, h};
+  }
+
+  /* webcam frame as the field's backdrop: mirrored, and letterboxed into camRect() */
   function drawCamera(){
     const v = Th.getCamVideo && Th.getCamVideo();
     if(!v) return;
+    const r=camRect();
     ctx.save();
     ctx.globalCompositeOperation='source-over';
     ctx.globalAlpha=CAM_ALPHA;
-    ctx.translate(Geo.ox+Geo.sideW, Geo.oy); ctx.scale(-1,1);
-    try{ ctx.drawImage(v,0,0,Geo.sideW,Geo.sideH); }catch(_){}   // a frame can vanish mid-teardown
+    ctx.translate(r.x+r.w, r.y); ctx.scale(-1,1);
+    try{ ctx.drawImage(v,0,0,r.w,r.h); }catch(_){}   // a frame can vanish mid-teardown
     ctx.restore();
   }
 
