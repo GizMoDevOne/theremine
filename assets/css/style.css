@@ -1,6 +1,6 @@
 /* Self-hosted so the page keeps its typography offline and asks nothing of a third party.
    latin subset only: it covers every glyph the interface needs from these two families
-   (the arrows and ▶ ◉ ✕ have no glyph here and fall back to the system font either way).
+   (the arrows and ▶ ✕ have no glyph here and fall back to the system font either way).
    DM Mono — SIL Open Font License 1.1 · Syncopate (Astigmatic) — Apache License 2.0
    Full texts in assets/fonts/. Syncopate ships 700 only: 400 is never used. */
 @font-face{font-family:"DM Mono";font-style:normal;font-weight:400;font-display:swap;
