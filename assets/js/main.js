@@ -20,6 +20,7 @@
     requestAnimationFrame(tick);
     const dt=Math.min(0.05,(now-last)/1000); last=now;
 
+    Th.inputTick(dt);                 // eases the Shift vibrato down after the key is released
     Th.demoTick(dt);                  // demo mode drives the voice like a hand would
     Th.visionTick(dt);                // webcam mode: hands in the air drive it too
     // glissando: smoothing toward the target

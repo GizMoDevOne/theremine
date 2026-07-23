@@ -8,6 +8,9 @@
 
   /* -- mouse / touch field -- */
   const hover = Th.hover = { x:0, y:0, on:false, inside:false, fx:0.5 };
+  let ptrForce = 0;   // last real pointer pressure (always 0 for a mouse) — what the vibrato falls back to when Shift is released
+  const VIB_FADE = 0.60;   // seconds for the Shift vibrato to ease out once the key is released
+  let vibFade = 0;         // >0 while that fade-out is running
 
   function fieldXY(e){ const r=cvs.getBoundingClientRect();
     const px=(e.clientX-r.left-Geo.ox)/Geo.sideW, py=(e.clientY-r.top-Geo.oy)/Geo.sideH;
@@ -25,23 +28,32 @@
   Th.startVoice = startVoice;
   Th.stopVoice = stopVoice;
 
+  /* vibrato release: once Shift is let go, ease the depth down instead of cutting it. Only drives
+     V.pressure while a fade is running, so the pointer, MIDI and the webcam keep full control. */
+  Th.inputTick = function(dt){
+    if(vibFade>0){
+      vibFade = Math.max(0, vibFade - dt/VIB_FADE);
+      V.pressure = Math.max(vibFade, ptrForce);
+    }
+  };
+
   /* a key or a button held when the page loses focus never gets its keyup/pointerup:
      drop every local source, but leave MIDI and the webcam playing — they keep sending
      while the tab is in the background, and cutting them would be wrong */
   function releaseAll(){
-    Input.keysDown.clear(); Input.shiftVib=false; Input.pointerDown=false;
+    Input.keysDown.clear(); Input.shiftVib=false; Input.pointerDown=false; ptrForce=0; vibFade=0;
     if(Th.noActiveSource()){ V.pressure=0; stopVoice(); }
   }
 
   Th.initPointerInput = function(){
     cvs.addEventListener('pointerdown',e=>{ Th.demoInterrupt(); Th.initAudio(); const p=updateHover(e); if(!p.inside) return;
-      Input.pointerDown=true; V.tx=p.x; V.ty=p.y; startVoice(); });
+      Input.pointerDown=true; ptrForce=p.force; V.tx=p.x; V.ty=p.y; startVoice(); });
     cvs.addEventListener('pointermove',e=>{ const p=updateHover(e);
-      if(Input.pointerDown&&p.inside){ V.tx=p.x; V.ty=p.y; if(p.force>0) V.pressure=p.force; } });
+      if(Input.pointerDown&&p.inside){ V.tx=p.x; V.ty=p.y; ptrForce=p.force; if(p.force>0) V.pressure=p.force; } });
     cvs.addEventListener('pointerenter',e=>updateHover(e));
-    addEventListener('pointerup',()=>{ Input.pointerDown=false; if(!Input.keysDown.size) stopVoice(); if(!Input.shiftVib) V.pressure=0; });
+    addEventListener('pointerup',()=>{ Input.pointerDown=false; ptrForce=0; if(!Input.keysDown.size) stopVoice(); if(!Input.shiftVib) V.pressure=0; });
     // pointercancel too: on touch a system gesture aborts the stroke without a pointerup
-    function leave(){ hover.on=false; if(Input.pointerDown){Input.pointerDown=false; if(!Input.keysDown.size) stopVoice();} }
+    function leave(){ hover.on=false; ptrForce=0; if(Input.pointerDown){Input.pointerDown=false; if(!Input.keysDown.size) stopVoice();} }
     cvs.addEventListener('pointerleave',leave);
     cvs.addEventListener('pointercancel',leave);
   };
@@ -68,7 +80,7 @@
       if(e.code==='Escape'){ Th.closeHelp(); Th.closeDemo(); return; }
       if(Th.helpOpen()||Th.demoOpen()) return;        // a panel is open: don't intercept gameplay keys
       if(!Input.boot && e.code==='Space'){ e.preventDefault(); onStart(); return; }
-      if(e.code==='ShiftLeft'||e.code==='ShiftRight'){ Input.shiftVib=true; V.pressure=1; return; }
+      if(e.code==='ShiftLeft'||e.code==='ShiftRight'){ Input.shiftVib=true; V.pressure=1; vibFade=0; return; }
       if(e.code==='ArrowUp'){ Input.kbCut=clamp01(Input.kbCut+0.08); V.ty=Input.kbCut; return; }
       if(e.code==='ArrowDown'){ Input.kbCut=clamp01(Input.kbCut-0.08); V.ty=Input.kbCut; return; }
       if(e.code==='KeyZ'){ Th.setOctave(P.octave-1); return; }
@@ -76,7 +88,7 @@
       if(e.code in KEYMAP){ Th.demoInterrupt(); Th.initAudio(); Input.keysDown.add(e.code); playKeyboard(); }
     });
     addEventListener('keyup',e=>{
-      if(e.code==='ShiftLeft'||e.code==='ShiftRight'){ Input.shiftVib=false; if(!Input.pointerDown) V.pressure=0; }
+      if(e.code==='ShiftLeft'||e.code==='ShiftRight'){ Input.shiftVib=false; if(ptrForce>0) V.pressure=ptrForce; else vibFade=V.pressure; }
       if(e.code in KEYMAP){ Input.keysDown.delete(e.code); if(Input.keysDown.size) playKeyboard(); else if(!Input.pointerDown) stopVoice(); }
     });
   };
