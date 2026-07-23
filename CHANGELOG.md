@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.0] - 2026-07-23
+
+### Changed
+- The webcam now fills the entire field (cover) instead of being letterboxed. 1.3.0 centred the 4:3 frame with dark bands to the sides; on a field roughly twice as wide as it is tall, those bands dominated. The frame is now scaled to cover the field with its aspect ratio kept — it never looks stretched — and the overflow is cropped by the field's rounded clip. The analysis is aligned to that same covered slice: the work canvas takes the field's aspect ratio and the source is cropped exactly as the display is, so the tracking marker still lands on the real hand and the whole analysis width serves the region actually played. The stream is requested at 16:9 (`ideal`, not strict), so a widescreen camera nearly fills the field with a minimal crop and a 4:3-only camera still opens with cover taking over. This reverses both the 1.3.0 letterbox and the 1.2.0 `object-fit: fill`.
+- The webcam toggle shows a camera icon (inline SVG inheriting `currentColor`) instead of the ◉ glyph, which read more like a record dot than a camera. It stays cream in the toolbar and turns amber on its own when the camera is live; the help labels now point to the "camera button".
+- Hand tracking is steadier, still with no dependency. Position and volume are smoothed by a One-Euro filter — steady at rest, low-lag in motion — in place of a single fixed smoothing constant. A motion accumulator lets a slow or near-still hand leave a lingering trace that fills the thin, noisy crescent the frame-diff produced, so the centroid stops jittering; vibrato still reads instantaneous energy, so a shake is not smeared into a sweep. The skin test is now a soft score with widened bounds and a slow, bounded re-centring on the moving pixels, so a darker or lighter skin tone and a warm or cool light no longer pull the mask off.
+- Releasing Shift now eases the vibrato down over ~0.6 s instead of cutting it dead. A small per-frame input tick drives this only while the fade is running, so the pointer, MIDI and the webcam keep full control of the vibrato depth when they are the source.
+
+### Fixed
+- Mouse vibrato no longer stays pinned at full. Vibrato from the mouse is armed by Shift alone — a mouse reports no pressure — so releasing Shift while the button was held left the depth at 100% until the click was released: the guard cleared it only `if(!pointerDown)`, a proxy written for a finger or stylus that keeps supplying real pressure, which a mouse never does. Vibrato now falls back to the pointer's actual pressure (0 for a mouse), so releasing Shift releases it (via the fade above), whether or not the click is held.
+
 ## [1.3.0] - 2026-07-22
 
 ### Added
