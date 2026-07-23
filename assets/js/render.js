@@ -98,8 +98,9 @@
     drawField();
     drawScope(dt);
     // the tracking markers belong above the trace but below the cursor, which stays the lead.
-    // they share the webcam's letterbox rect, so a marker keeps sitting over the real hand
-    if(Th.drawVisionOverlay){ const r=camRect(); Th.drawVisionOverlay(ctx, r.x, r.y, r.w, r.h); }
+    // the frame covers the whole field, so the tracking space IS the field — hand the markers
+    // the field rect and a marker keeps sitting over the real hand
+    if(Th.drawVisionOverlay){ Th.drawVisionOverlay(ctx, Geo.ox, Geo.oy, Geo.sideW, Geo.sideH); }
     drawCursor();
     ctx.restore();
 
@@ -107,20 +108,21 @@
   }
   Th.render = render;
 
-  /* the webcam's letterbox: the frame centred inside the field with its aspect ratio kept
-     (contain), so it never looks stretched. drawVisionOverlay() is handed this same rect, so
-     the tracking marker still lands over the real hand — the whole frame maps 1:1 to the rect. */
+  /* the webcam fills the whole field (cover): the frame is scaled to cover the field with its
+     aspect ratio kept, so it never looks stretched, and the overflow is cropped by the field's
+     rounded clip. vision.js analyses the very same covered slice, so the tracking maps 1:1 to
+     the field and a marker keeps sitting over the real hand. */
   function camRect(){
     const v = Th.getCamVideo && Th.getCamVideo();
     const fx=Geo.ox, fy=Geo.oy, fw=Geo.sideW, fh=Geo.sideH;
     if(!v) return {x:fx,y:fy,w:fw,h:fh};
-    const ar=(v.videoWidth||4)/(v.videoHeight||3);
+    const ar=(v.videoWidth||16)/(v.videoHeight||9);
     let w=fw, h=fw/ar;
-    if(h>fh){ h=fh; w=fh*ar; }
+    if(h<fh){ h=fh; w=fh*ar; }   // cover: if too short, grow to fill the height (crops the sides)
     return {x:fx+(fw-w)/2, y:fy+(fh-h)/2, w, h};
   }
 
-  /* webcam frame as the field's backdrop: mirrored, and letterboxed into camRect() */
+  /* webcam frame as the field's backdrop: mirrored, and scaled to cover the field (camRect) */
   function drawCamera(){
     const v = Th.getCamVideo && Th.getCamVideo();
     if(!v) return;

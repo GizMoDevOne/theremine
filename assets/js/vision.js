@@ -11,57 +11,126 @@
    The video never leaves the machine: it is only read into an offscreen canvas.
    ==========================================================================*/
 (function(Th){
-  const $=Th.$, V=Th.V, Input=Th.Input, clamp01=Th.clamp01;
+  const $=Th.$, V=Th.V, Input=Th.Input, Geo=Th.Geo, clamp01=Th.clamp01;
 
   /* ---- everything worth adjusting by feel lives here ---- */
-  const W=160, H=120;          // analysis resolution
+  const AW=160;                // analysis width; the height follows the field's ratio (cover)
   const RATE=1/30;             // seconds between analysed frames
   const SPLIT=0.45;            // 'two' mode: left share of the frame (volume hand)
   const DIFF_FLOOR=8;          // minimum luma change counted as motion
   const DIFF_REL=0.30;         // ...or this share of the frame's strongest motion
-  const ENERGY_MIN=90;         // below this a zone holds its last position
-  const SMOOTH=0.35;           // smoothing toward the detected centroid
+  const MOT_DECAY=0.75;        // motion accumulator: a slow hand leaves a lingering trace that
+                               // fills the noisy crescent, so its centroid stops jittering
+  const ENERGY_MIN=120;        // below this a zone holds its last position
   const VOL_GATE=0.06;         // below this volume the voice is released
-  const VIB_FLOOR=4000;        // motion energy below which no vibrato is applied
+  const VIB_FLOOR=4000;        // instantaneous motion energy below which no vibrato is applied
   const VIB_SPAN=16000;        // ...and the span above it that reaches full depth
   const HOLD_RELEASE=0.35;     // 'one' mode: seconds of stillness before releasing
+  // adaptive smoothing (One-Euro): steady at rest, snappy in motion — replaces a single lag knob
+  const EURO_MINCUT=1.1, EURO_BETA=0.02, EURO_DCUT=1.0;   // pitch X/Y
+  const EURO_VOL_MINCUT=1.0, EURO_VOL_BETA=0.012;         // volume hand (a touch smoother)
+  // skin chroma as a soft score, not a hard box: tolerant to skin tone and lighting drift.
+  // centre ± half-range in YCbCr, widened vs a strict skin box
+  const SKIN_CB=102, SKIN_CB_R=34;
+  const SKIN_CR=153, SKIN_CR_R=28;
+  const SKIN_ADAPT=0.02;       // how fast the skin centre re-centres on the moving pixels (0 = fixed)
+  const SKIN_ADAPT_MAX=16;     // ...never drifting further than this from the defaults
 
   let stream=null, video=null, work=null, wctx=null;
-  let lum=null, dif=null, primed=false, acc=0;
+  let W=AW, H=120, lum=null, dif=null, mot=null, primed=false, acc=0;
   let pitchX=0.5, pitchY=0.5, vol=0, volTarget=0, stillT=0;
   let jitter=0;
   let volSeen=false, pitchSeen=false;
+  let skinCb=SKIN_CB, skinCr=SKIN_CR;   // current skin centre; may re-centre slowly on the hand
+
+  /* One-Euro filter: low cutoff (steady) at rest, rising with speed (low lag). One per signal. */
+  function makeOneEuro(minCut, beta, dCut){
+    let xp=0, dxp=0, has=false;
+    const alpha=(cut,dt)=>{ const r=2*Math.PI*cut*dt; return r/(r+1); };
+    const f=function(x, dt){
+      if(!has){ has=true; xp=x; return x; }
+      const dx=(x-xp)/dt, aD=alpha(dCut,dt);
+      dxp += aD*(dx-dxp);
+      const a=alpha(minCut+beta*Math.abs(dxp), dt);
+      xp += a*(x-xp);
+      return xp;
+    };
+    f.reset=()=>{ has=false; dxp=0; };
+    return f;
+  }
+  const euroX=makeOneEuro(EURO_MINCUT,EURO_BETA,EURO_DCUT);
+  const euroY=makeOneEuro(EURO_MINCUT,EURO_BETA,EURO_DCUT);
+  const euroV=makeOneEuro(EURO_VOL_MINCUT,EURO_VOL_BETA,EURO_DCUT);
+
+  // work canvas + buffers follow the field's aspect ratio; only reallocated when it really changes
+  function ensureBuffers(aw, ah){
+    if(work && W===aw && H===ah) return;
+    W=aw; H=ah;
+    if(!work){ work=document.createElement('canvas'); }
+    work.width=W; work.height=H;
+    wctx=work.getContext('2d',{willReadFrequently:true});
+    lum=new Float32Array(W*H); dif=new Float32Array(W*H); mot=new Float32Array(W*H);
+    primed=false;
+  }
+
+  function resetTracking(){
+    if(mot) mot.fill(0);
+    primed=false;
+    euroX.reset(); euroY.reset(); euroV.reset();
+    skinCb=SKIN_CB; skinCr=SKIN_CR;
+  }
 
   /* ============================ DETECTION ============================ */
   function analyse(){
+    const v=video, vw=v.videoWidth||4, vh=v.videoHeight||3;
+    // analyse exactly the slice the field shows (cover): the work canvas takes the field's aspect
+    // ratio, and the source is cropped the same way camRect() crops the display
+    const Rf = (Geo.sideH>0 ? Geo.sideW/Geo.sideH : 4/3);
+    ensureBuffers(AW, Math.min(200, Math.max(40, Math.round(AW/Rf))));
+    const Rv = vw/vh;
+    let sx,sy,sw,sh;
+    if(Rv < Rf){ sw=vw; sh=vw/Rf; sx=0; sy=(vh-sh)/2; }   // field wider than cam: crop top/bottom
+    else       { sh=vh; sw=vh*Rf; sy=0; sx=(vw-sw)/2; }   // ...taller than cam: crop the sides
     // mirrored, so moving right on screen means moving right in the field
-    wctx.save(); wctx.scale(-1,1); wctx.drawImage(video,-W,0,W,H); wctx.restore();
+    wctx.save(); wctx.scale(-1,1); wctx.drawImage(v, sx,sy,sw,sh, -W,0,W,H); wctx.restore();
     const img=wctx.getImageData(0,0,W,H).data;
 
-    let dMax=0;
+    // motion (frame diff) weighted by a soft skin score, then accumulated so a slow hand stays solid
+    let motMax=0, scb=0, scr=0, sWt=0;
     for(let i=0,p=0;i<img.length;i+=4,p++){
       const r=img[i], g=img[i+1], b=img[i+2];
-      const y=0.299*r+0.587*g+0.114*b;
+      const yl=0.299*r+0.587*g+0.114*b;
       const cb=128-0.168736*r-0.331264*g+0.5*b;
       const cr=128+0.5*r-0.418688*g-0.081312*b;
-      // motion AND skin: rejects light flicker, shadows and moving background at once
-      const skin = cb>=77 && cb<=127 && cr>=133 && cr<=173;
-      const d = primed && skin ? Math.abs(y-lum[p]) : 0;
-      lum[p]=y; dif[p]=d;
-      if(d>dMax) dMax=d;
+      // soft skin membership (0..1): tolerant at the edges, so a skin tone stays counted
+      const dcb=(cb-skinCb)/SKIN_CB_R, dcr=(cr-skinCr)/SKIN_CR_R;
+      const skin=Math.max(0,1-dcb*dcb)*Math.max(0,1-dcr*dcr);
+      const d = primed ? Math.abs(yl-lum[p])*skin : 0;
+      lum[p]=yl; dif[p]=d;
+      const m = mot[p]=Math.max(d, mot[p]*MOT_DECAY);
+      if(m>motMax) motMax=m;
+      if(d>DIFF_FLOOR){ scb+=cb*d; scr+=cr*d; sWt+=d; }   // sample the moving pixels' own chroma
     }
     primed=true;
 
-    // self-calibrating threshold: no sensitivity knob to expose
-    const thr=Math.max(DIFF_FLOOR, dMax*DIFF_REL);
+    // slowly re-centre the skin window on the hand actually moving, so a warm/cool light or a
+    // darker/lighter tone stops pulling the mask off. Bounded with heavy inertia — never runs away.
+    if(SKIN_ADAPT>0 && sWt>0){
+      skinCb += (scb/sWt-skinCb)*SKIN_ADAPT; skinCr += (scr/sWt-skinCr)*SKIN_ADAPT;
+      skinCb=Math.min(SKIN_CB+SKIN_ADAPT_MAX,Math.max(SKIN_CB-SKIN_ADAPT_MAX,skinCb));
+      skinCr=Math.min(SKIN_CR+SKIN_ADAPT_MAX,Math.max(SKIN_CR-SKIN_ADAPT_MAX,skinCr));
+    }
+
+    // self-calibrating threshold on the accumulated motion: no sensitivity knob to expose
+    const thr=Math.max(DIFF_FLOOR, motMax*DIFF_REL);
     const split = Input.camMode==='two' ? Math.round(W*SPLIT) : 0;
-    let lw=0,ly=0, rw=0,rx=0,ry=0;
+    let lw=0,ly=0, rw=0,rx=0,ry=0, rInst=0;
     for(let y=0;y<H;y++){
       const row=y*W;
       for(let x=0;x<W;x++){
-        const w=dif[row+x]; if(w<thr) continue;
-        if(x<split){ lw+=w; ly+=y*w; }
-        else { rw+=w; rx+=x*w; ry+=y*w; }
+        const m=mot[row+x]; if(m<thr) continue;
+        if(x<split){ lw+=m; ly+=y*m; }
+        else { rw+=m; rx+=x*m; ry+=y*m; rInst+=dif[row+x]; }   // rInst: live energy, for vibrato
       }
     }
 
@@ -69,18 +138,18 @@
     pitchSeen = rw>ENERGY_MIN;
     if(pitchSeen){
       const cx=rx/rw, cy=ry/rw;
-      pitchX += (((cx-split)/(W-split))-pitchX)*SMOOTH;
-      pitchY += ((1-cy/H)-pitchY)*SMOOTH;
+      pitchX = euroX((cx-split)/(W-split), RATE);
+      pitchY = euroY(1-cy/H, RATE);
     }
-    // shaking the hand adds vibrato, the way a thereminist does it. Measured on the
-    // zone's motion energy, not on the tracked position: at low speed the mask is a
-    // thin crescent whose centroid is too noisy to tell a shake from a slow sweep.
-    jitter += (clamp01((rw-VIB_FLOOR)/VIB_SPAN)-jitter)*0.25;
+    // shaking the hand adds vibrato, the way a thereminist does it. Measured on the zone's live
+    // energy (not the accumulator, which would smear a shake into a sweep; not the tracked
+    // position, too noisy at low speed to tell a shake from a glide).
+    jitter += (clamp01((rInst-VIB_FLOOR)/VIB_SPAN)-jitter)*0.25;
 
     if(Input.camMode==='two'){
       volSeen = lw>ENERGY_MIN;
       if(volSeen) volTarget=clamp01(1-(ly/lw)/H);   // hand high = loud, hand low = silent
-      vol += (volTarget-vol)*SMOOTH;
+      vol = euroV(volTarget, RATE);
     }else{
       volSeen=false;
       stillT = pitchSeen ? 0 : stillT+RATE;         // no volume hand: release on stillness
@@ -169,7 +238,9 @@
   // capture card, a Windows Hello sensor — and the browser's default pick is often one
   // of those ghosts, which fails as NotReadableError. Try the default, then walk the list.
   async function openStream(){
-    const base={width:640,height:480};   // preview is 512 wide; asking for less would upscale a blurry image
+    // 16:9 preferred (ideal, not strict) so a widescreen frame nearly fills the field and the
+    // cover crop stays minimal; a 4:3-only camera still opens and cover takes over
+    const base={width:{ideal:1280},height:{ideal:720}};
     try{
       return await navigator.mediaDevices.getUserMedia({video:base,audio:false});
     }catch(err){
@@ -214,7 +285,7 @@
     Th.initAudio();
     video.srcObject=stream;
     try{ await video.play(); }catch(_){}
-    primed=false; acc=0; vol=0; volTarget=0; stillT=HOLD_RELEASE;
+    resetTracking(); acc=0; vol=0; volTarget=0; stillT=HOLD_RELEASE;
     Input.camOn=true;
     setStatus('cam.status.on');
   }
@@ -232,9 +303,7 @@
   Th.initVision = function(){
     video=$('camVideo');
     if(!video) return;
-    work=document.createElement('canvas'); work.width=W; work.height=H;
-    wctx=work.getContext('2d',{willReadFrequently:true});
-    lum=new Float32Array(W*H); dif=new Float32Array(W*H);
+    // the work canvas and buffers are sized on first analysed frame (they follow the field ratio)
 
     const btn=$('camBtn');
     // toggle on what is on screen, not on the stream: a camera that failed to start
@@ -250,7 +319,7 @@
       Th.setActiveChip(chips,c);
       release();                              // no note left hanging across the switch
       Input.camMode=c.dataset.cam;
-      vol=0; volTarget=0; stillT=HOLD_RELEASE;
+      vol=0; volTarget=0; stillT=HOLD_RELEASE; resetTracking();
     });
   };
 })(window.Th);
