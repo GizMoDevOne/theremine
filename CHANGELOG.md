@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.1] - 2026-07-24
+
+### Fixed
+- Webcam hand tracking now reaches the edges of the field. The tracked point is the centroid of the hand, and a hand has width — cropped at the frame's border, its centre could never quite get there — so the note and the volume both fell short of the extremes. The reachable band is now stretched to the full range with a small margin, so a hand at the visible edge maps to the extreme: the full pitch sweep across the field, and full silence-to-loud on the volume hand.
+
 ## [1.4.0] - 2026-07-23
 
 ### Changed

@@ -26,6 +26,9 @@
   const VIB_FLOOR=4000;        // instantaneous motion energy below which no vibrato is applied
   const VIB_SPAN=16000;        // ...and the span above it that reaches full depth
   const HOLD_RELEASE=0.35;     // 'one' mode: seconds of stillness before releasing
+  // the tracked centroid can't reach the frame edge — a hand has width and is cropped there — so
+  // the note fell short of the extremes. Stretch the reachable band to the full range.
+  const EDGE=0.15;             // margin: how far in from each edge already counts as an extreme
   // adaptive smoothing (One-Euro): steady at rest, snappy in motion — replaces a single lag knob
   const EURO_MINCUT=1.1, EURO_BETA=0.02, EURO_DCUT=1.0;   // pitch X/Y
   const EURO_VOL_MINCUT=1.0, EURO_VOL_BETA=0.012;         // volume hand (a touch smoother)
@@ -61,6 +64,8 @@
   const euroX=makeOneEuro(EURO_MINCUT,EURO_BETA,EURO_DCUT);
   const euroY=makeOneEuro(EURO_MINCUT,EURO_BETA,EURO_DCUT);
   const euroV=makeOneEuro(EURO_VOL_MINCUT,EURO_VOL_BETA,EURO_DCUT);
+  // map the reachable centroid band [EDGE, 1-EDGE] onto the full 0..1 so the note reaches the edges
+  const expand = v => clamp01((v-EDGE)/(1-2*EDGE));
 
   // work canvas + buffers follow the field's aspect ratio; only reallocated when it really changes
   function ensureBuffers(aw, ah){
@@ -138,8 +143,8 @@
     pitchSeen = rw>ENERGY_MIN;
     if(pitchSeen){
       const cx=rx/rw, cy=ry/rw;
-      pitchX = euroX((cx-split)/(W-split), RATE);
-      pitchY = euroY(1-cy/H, RATE);
+      pitchX = euroX(expand((cx-split)/(W-split)), RATE);
+      pitchY = euroY(expand(1-cy/H), RATE);
     }
     // shaking the hand adds vibrato, the way a thereminist does it. Measured on the zone's live
     // energy (not the accumulator, which would smear a shake into a sweep; not the tracked
@@ -148,7 +153,7 @@
 
     if(Input.camMode==='two'){
       volSeen = lw>ENERGY_MIN;
-      if(volSeen) volTarget=clamp01(1-(ly/lw)/H);   // hand high = loud, hand low = silent
+      if(volSeen) volTarget=expand(1-(ly/lw)/H);    // hand high = loud, hand low = silent
       vol = euroV(volTarget, RATE);
     }else{
       volSeen=false;
